@@ -1,0 +1,69 @@
+name: Keyloft
+options:
+  bundleIdPrefix: app.vdaily
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+
+packages:
+  Keyloft:
+    path: ".."
+
+settings:
+  base:
+    # Mặc định ad-hoc để build không cần team; muốn ký thật (Data Protection Keychain)
+    # thì cp Local.xcconfig.example → Local.xcconfig và chạy `make app` (Makefile tự đính).
+    CODE_SIGN_IDENTITY: "-"
+    CODE_SIGN_STYLE: Manual
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_ENTITLEMENTS: ""
+    ENABLE_HARDENED_RUNTIME: true
+    ENABLE_APP_SANDBOX: false
+    SWIFT_VERSION: "6.0"
+    GENERATE_INFOPLIST_FILE: false
+
+targets:
+  Keyloft:
+    type: application
+    platform: macOS
+    sources:
+      - KeyloftApp.swift
+      - AppContainer.swift
+      - Platform
+      - Features
+    dependencies:
+      - package: Keyloft
+        product: VaultRuntime
+    # Entitlements đính khi ký thật (Local.xcconfig đặt CODE_SIGN_ENTITLEMENTS +
+    # DEVELOPMENT_TEAM); dev ad-hoc không dùng (tránh đòi provisioning profile).
+    info:
+      path: Info.plist
+      properties:
+        CFBundleDisplayName: Keyloft
+        CFBundleIdentifier: app.vdaily.keyloft
+        CFBundleShortVersionString: "0.1.0"
+        CFBundleVersion: "1"
+        LSMinimumSystemVersion: "14.0"
+        LSUIElement: true
+        CFBundleURLTypes:
+          - CFBundleURLName: app.vdaily.keyloft
+            CFBundleURLSchemes: [app.vdaily.keyloft]
+  KeyloftAppTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - Tests/KeyloftAppTests
+    dependencies:
+      - target: Keyloft
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: true
+        PRODUCT_BUNDLE_IDENTIFIER: app.vdaily.keyloft.tests
+
+schemes:
+  Keyloft:
+    build:
+      targets:
+        Keyloft: all
+    test:
+      targets: [KeyloftAppTests]
