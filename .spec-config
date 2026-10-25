@@ -1,0 +1,6 @@
+spec_root: specs/
+code_prefix: SPEC
+code_digits: 3
+required_sections:
+  product: ["## Summary", "## Problem", "## Goals", "## Non-Goals", "## Behavior", "## Success Criteria"]
+  tech: ["## Problem", "## Relevant Code", "## Current State", "## Proposed Changes", "## Implementation Steps", "## Testing"]
