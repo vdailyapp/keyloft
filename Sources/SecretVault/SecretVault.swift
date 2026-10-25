@@ -134,6 +134,25 @@ public actor SecretVault {
         try await appendAudit(.secretDeleted, target: "secret:\(id)", actor: actor)
     }
 
+    /// Xóa GIÁ TRỊ trong store nhưng giữ metadata (hàng credential còn tham chiếu FK
+    /// RESTRICT, và giữ lịch sử). Dọn credential đã supersede.
+    public func purgeValue(_ id: SecretID, actor: AuditActor) async throws {
+        guard let secret = try await metadata.get(id) else {
+            throw SecretVaultError.notFound(id)
+        }
+        do {
+            try await store.delete(secret.keychainRef)
+        } catch let error as SecretStoreError {
+            throw SecretVaultError.store(error)
+        }
+        do {
+            try await metadata.markRotated(id, at: clock.now())
+        } catch {
+            throw SecretVaultError.metadata("\(error)")
+        }
+        try await appendAudit(.secretDeleted, target: "secret:\(id)", actor: actor)
+    }
+
     /// Metadata có mặt VÀ item còn trong store.
     public func exists(_ id: SecretID) async throws -> Bool {
         guard let secret = try await metadata.get(id) else { return false }
