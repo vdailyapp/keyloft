@@ -44,4 +44,5 @@ Khi task đổi public API mà task khác đã/đang dùng, ghi một dòng ở 
 - (đã chốt sẵn trong spec) T08: `KeychainSecretStore.init(configuration:contextProvider:)` nhận `KeychainAuthContextProvider` thay vì `VaultLock`.
 - T12: `BrowserSession` throw `BrowserSessionError.userCancelled`; T15 map sang `OAuthError.userCancelled`.
 - T09: `KeychainAuthContextProvider.currentContext()` đổi trả `AuthenticatedContext?` (wrapper Sendable) thay `LAContext?` — LAContext không gửi qua actor được trong Swift 6; ảnh hưởng T08 (đã cập nhật trong cùng PR).
+- T23: `RuntimeDependencies.secretStore` là factory `(any KeychainAuthContextProvider) -> any SecretStore` (Keychain cần VaultLock do init dựng); thêm `RuntimeDependencies.inMemory(...)` cho test tích hợp.
 - T20: `HealthChecker` nhận `secretExists: @Sendable (SecretID) async throws -> Bool` thay `secrets: SecretVault` (HealthCheck không được phụ thuộc SecretVault trong Package.swift); T23 bơm closure từ SecretVault. Ghi chú thêm: T16 `TokenProvider.init` có tham số `ids: any IDGenerator` (TECH thiếu, audit cần).
