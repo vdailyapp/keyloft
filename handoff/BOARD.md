@@ -24,7 +24,7 @@ Tổng 29 task: 11 GLM-5.3, 18 Flash.
 | [T15](tasks/T15-oauth-login-service.md) | TokenVault: OAuthLoginService (điều phối đăng nhập) | SPEC-005 | **5.3** | 5 | T07, T10, T11, T12, T13, T14 | todo |
 | [T16](tasks/T16-token-provider.md) | TokenVault: TokenProvider (cache, single-flight, rotation) | SPEC-006 | **5.3** | 5 | T07, T11, T13 | todo |
 | [T17](tasks/T17-provider-catalog.md) | Providers: Google, Microsoft, Dropbox + ProviderCatalog | SPEC-007 | Flash | 3 | T03 | done |
-| [T18](tasks/T18-oidc-discovery.md) | Providers: OIDC Discovery + merge an toàn | SPEC-007 | Flash | 4 | T17 | todo |
+| [T18](tasks/T18-oidc-discovery.md) | Providers: OIDC Discovery + merge an toàn | SPEC-007 | Flash | 4 | T17 | done |
 | [T19](tasks/T19-api-probes.md) | Providers: API probe Google/Microsoft/Dropbox | SPEC-007 | Flash | 4 | T17 | todo |
 | [T20](tasks/T20-health-checker.md) | HealthCheck: 5 tầng + map trạng thái | SPEC-008 | **5.3** | 6 | T16, T19 | todo |
 | [T21](tasks/T21-health-scheduler.md) | HealthCheck: HealthScheduler (trigger, 6h, backoff, dedupe) | SPEC-008 | **5.3** | 7 | T20 | todo |
