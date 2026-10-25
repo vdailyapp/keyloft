@@ -61,4 +61,4 @@ make test
 - [ ] Mọi lệnh Verify xanh
 - [ ] Đủ test ID ở mục Tests
 - [ ] Không đụng file ngoài mục Files
-- [ ] `handoff/reports/T01.md` đã viết, BOARD status = `review`
+- [ ] `handoff/reports/T01.md` đã viết, nhánh đã push, BOARD (trên main) status = `review`

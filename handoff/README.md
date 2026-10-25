@@ -28,13 +28,20 @@ Quy tắc: task Flash **không được** tự đổi public API ngoài những 
 
 Tổng: 11 task GLM-5.3, 18 task Flash (xem `BOARD.md`).
 
+## Chế độ tự chạy
+
+Muốn zcode tự nhận và làm hết BOARD (một phiên GLM-5.3 làm Lead/review/merge, một phiên Flash
+làm Builder): dùng prompt trong [`AUTOPILOT.md`](AUTOPILOT.md). Phần dưới là quy trình thủ công
+từng task.
+
 ## Quy trình mỗi task
 
 1. **Chọn task**: trong `BOARD.md`, status `todo` và mọi task ở cột `Deps` đã `done`.
 2. **Tạo nhánh**: `git switch -c task/Txx-<slug>` từ `main` mới nhất.
 3. **Mở zcode** ở root repo, chọn model theo cột `Model`, dán prompt từ
    `templates/PROMPT-FLASH.md` hoặc `PROMPT-PRO.md` (thay `{{TASK}}` = `T05`).
-4. Agent làm, chạy lệnh verify trong task, viết `reports/Txx.md`, đặt status `review`.
+4. Agent làm, chạy lệnh verify trong task, viết `reports/Txx.md`, push nhánh, rồi đặt status
+   `review` trong `BOARD.md` trên `main`.
 5. **Review**:
    - Task Flash → mở phiên GLM-5.3 mới với `templates/PROMPT-REVIEW.md`. Có lỗi → quay lại phiên
      Flash cũ (giữ ngữ cảnh) với danh sách lỗi.

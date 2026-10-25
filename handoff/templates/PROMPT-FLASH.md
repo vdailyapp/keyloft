@@ -17,14 +17,15 @@ Luật cứng:
 - Viết ĐỦ các test ID ở mục "Tests"; tên test bắt đầu bằng ID, ví dụ @Test("U3: ...").
 - Không xóa/skip test. Không dùng try? để nuốt lỗi. Không log token/secret.
 - Nếu spec thiếu thông tin để làm tiếp: dừng, ghi câu hỏi vào handoff/reports/{{TASK}}.md mục
-  "Blocked", đặt status task trong handoff/BOARD.md = blocked. Không tự đoán interface.
+  "Blocked", đặt status task trong handoff/BOARD.md (trên main) = blocked. Không tự đoán interface.
 
 Làm xong:
 1. Chạy mọi lệnh ở mục "Verify" của task; tất cả phải xanh.
 2. Đọc lại diff của bạn một lần.
 3. Viết handoff/reports/{{TASK}}.md theo handoff/templates/REPORT.md.
-4. Sửa cột Status của {{TASK}} trong handoff/BOARD.md thành review.
-5. Commit trên nhánh hiện tại: "SPEC-NNN/{{TASK}}: <tiêu đề task>".
+4. Commit trên nhánh task: "SPEC-NNN/{{TASK}}: <tiêu đề task>" và push nhánh.
+5. Trên main: sửa Status của {{TASK}} trong handoff/BOARD.md thành review, commit
+   "board: {{TASK}} review", push. (Không sửa BOARD.md trên nhánh task.)
 
 Bắt đầu bằng việc tóm tắt trong 5 dòng: file sẽ tạo, test sẽ viết, lệnh verify.
 ```

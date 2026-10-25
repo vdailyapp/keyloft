@@ -50,4 +50,4 @@ swift test --filter VaultPersistenceTests
 - [ ] Mọi lệnh Verify xanh
 - [ ] Đủ test ID ở mục Tests
 - [ ] Không đụng file ngoài mục Files
-- [ ] `handoff/reports/T05.md` đã viết, BOARD status = `review`
+- [ ] `handoff/reports/T05.md` đã viết, nhánh đã push, BOARD (trên main) status = `review`

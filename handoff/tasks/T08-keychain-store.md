@@ -49,4 +49,4 @@ make test-keychain
 - [ ] Mọi lệnh Verify xanh
 - [ ] Đủ test ID ở mục Tests
 - [ ] Không đụng file ngoài mục Files
-- [ ] `handoff/reports/T08.md` đã viết, BOARD status = `review`
+- [ ] `handoff/reports/T08.md` đã viết, nhánh đã push, BOARD (trên main) status = `review`

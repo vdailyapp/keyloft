@@ -76,6 +76,7 @@ Task chỉ được coi là xong khi `make build`, `make lint` và test của ta
 
 ## Khi xong task
 
-1. Cập nhật `Status` của task trong `handoff/BOARD.md` → `review`.
-2. Viết report `handoff/reports/Txx.md` theo `handoff/templates/REPORT.md`.
-3. Lệch so với TECH.md → ghi rõ trong report mục "Deviations" (không âm thầm đổi interface).
+1. Viết report `handoff/reports/Txx.md` theo `handoff/templates/REPORT.md`, commit trên nhánh task.
+2. Lệch so với TECH.md → ghi rõ trong report mục "Deviations" (không âm thầm đổi interface).
+3. `handoff/BOARD.md` **chỉ sửa trên `main`** (commit riêng "board: Txx <status>"), không sửa
+   trên nhánh task — tránh conflict giữa các phiên. Chế độ tự chạy: `handoff/AUTOPILOT.md`.

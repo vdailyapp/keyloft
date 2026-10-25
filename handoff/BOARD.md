@@ -1,7 +1,7 @@
 # Task board — Keyloft giai đoạn 1
 
-Status: `todo` → `in-progress` → `review` → `done` (hoặc `blocked`). Agent chỉ sửa cột Status của
-task mình. Quy trình: [README.md](README.md). Model: **5.3** = GLM-5.3, Flash = GLM-5.3-Flash.
+Status: `todo` → `in-progress:<phiên>` → `review` → `done` (hoặc `blocked`, `changes-requested`,
+`needs-human`). Chỉ sửa trên `main`, mỗi thay đổi một commit `board: Txx <status>`. Quy trình: [README.md](README.md). Model: **5.3** = GLM-5.3, Flash = GLM-5.3-Flash.
 
 Tổng 29 task: 11 GLM-5.3, 18 Flash.
 

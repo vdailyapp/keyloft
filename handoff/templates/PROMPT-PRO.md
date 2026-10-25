@@ -28,5 +28,6 @@ Làm xong:
 1. Chạy mọi lệnh ở mục "Verify"; tất cả xanh. Chạy thêm `swift test` toàn bộ một lần.
 2. Tự review diff theo checklist ở AGENTS.md mục Bảo mật.
 3. Viết handoff/reports/{{TASK}}.md theo handoff/templates/REPORT.md.
-4. Status {{TASK}} trong handoff/BOARD.md → review. Commit "SPEC-NNN/{{TASK}}: <tiêu đề>".
+4. Commit "SPEC-NNN/{{TASK}}: <tiêu đề>" trên nhánh task, push nhánh. Trên main: Status
+   {{TASK}} trong handoff/BOARD.md → review, commit "board: {{TASK}} review", push.
 ```

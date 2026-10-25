@@ -48,4 +48,4 @@ swift test --filter HealthCheckTests
 - [ ] Mọi lệnh Verify xanh
 - [ ] Đủ test ID ở mục Tests
 - [ ] Không đụng file ngoài mục Files
-- [ ] `handoff/reports/T21.md` đã viết, BOARD status = `review`
+- [ ] `handoff/reports/T21.md` đã viết, nhánh đã push, BOARD (trên main) status = `review`
