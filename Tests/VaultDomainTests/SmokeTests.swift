@@ -1,4 +1,5 @@
 import Testing
+
 @testable import VaultDomain
 
 @Suite("VaultDomain smoke")

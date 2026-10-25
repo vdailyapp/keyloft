@@ -1,4 +1,5 @@
 import Testing
+
 @testable import VaultRuntime
 
 @Suite("VaultRuntime smoke")
