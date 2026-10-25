@@ -39,10 +39,10 @@
 
 | # | Scenario | Setup | Expected |
 |---|----------|-------|----------|
-| I1 | Thuộc tính item | `set` `.afterFirstUnlock` rồi đọc attributes bằng `SecItemCopyMatching` | `kSecAttrSynchronizable` false; accessible `ck` (AfterFirstUnlockThisDeviceOnly) |
+| I1 | Thuộc tính item | `set` `.afterFirstUnlock` rồi đọc attributes bằng `SecItemCopyMatching` | item tồn tại đúng class/account. *(Cập nhật T08: login keychain không trả về thuộc tính accessible/synchronizable — giá trị hai thuộc tính này được bảo đảm bởi cấu trúc query lúc ADD, kiểm bằng unit test `KeychainQueryTests.baseQuery`, và chỉ đọc lại được trong Data Protection Keychain của app đã ký)* |
 | I2 | Set/get/overwrite/delete | set "a", set "b", get, delete, get | get → "b"; sau delete → `.notFound`; delete lần 2 không lỗi |
-| I3 | contains không UI | set `.userPresence` | `contains == true`, test không treo (timeout 5 s) |
-| I4 | get item presence không context, không tương tác | `get` với `LAContext.interactionNotAllowed` | `.interactionNotAllowed` |
+| I3 | contains không UI | set `.userPresence` | `contains == true`, test không treo (timeout 5 s). *(Cập nhật T08: item SecAccessControl cần Data Protection Keychain — binary chưa ký bị `-34018`; test tự tắt theo probe năng lực, chạy đầy đủ trong app đã ký ở SPEC-011/T29)* |
+| I4 | get item presence không context, không tương tác | `get` với `LAContext.interactionNotAllowed` (qua `KeychainAuthContextProvider`) | `.interactionNotAllowed`. *(Cùng ràng buộc DP keychain như I3)* |
 
 ## Edge Cases and Failure Modes
 
