@@ -19,7 +19,7 @@ Tổng 29 task: 11 GLM-5.3, 18 Flash.
 | [T10](tasks/T10-pkce-state.md) | TokenVault: Base64URL, PKCE, state | SPEC-005 | Flash | 3 | T03 | done |
 | [T11](tasks/T11-authorize-url-scopes.md) | TokenVault: AuthorizationRequest + ScopeNormalizer | SPEC-005 | Flash | 4 | T10 | todo |
 | [T12](tasks/T12-loopback-browser.md) | TokenVault: LoopbackServer (NWListener) + BrowserSession + fakes | SPEC-005 | **5.3** | 2 | T02 | done |
-| [T13](tasks/T13-token-endpoint.md) | TokenVault: TokenEndpointClient, OAuthError, form encoding | SPEC-005 | Flash | 3 | T03 | todo |
+| [T13](tasks/T13-token-endpoint.md) | TokenVault: TokenEndpointClient, OAuthError, form encoding | SPEC-005 | Flash | 3 | T03 | done |
 | [T14](tasks/T14-id-token.md) | TokenVault: IDTokenClaims decode + validate | SPEC-005 | Flash | 4 | T10, T13 | todo |
 | [T15](tasks/T15-oauth-login-service.md) | TokenVault: OAuthLoginService (điều phối đăng nhập) | SPEC-005 | **5.3** | 5 | T07, T10, T11, T12, T13, T14 | todo |
 | [T16](tasks/T16-token-provider.md) | TokenVault: TokenProvider (cache, single-flight, rotation) | SPEC-006 | **5.3** | 5 | T07, T11, T13 | todo |
