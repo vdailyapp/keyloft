@@ -8,7 +8,7 @@ Tổng 29 task: 11 GLM-5.3, 18 Flash.
 | Task | Tiêu đề | Spec | Model | Wave | Deps | Status |
 | --- | --- | --- | --- | --- | --- | --- |
 | [T01](tasks/T01-spm-skeleton.md) | Khung SPM, Makefile, lint, CI | SPEC-001 | Flash | 0 | — | done |
-| [T02](tasks/T02-domain-entities.md) | VaultDomain: ID, enum, ScopeSet, entity | SPEC-002 | Flash | 1 | T01 | todo |
+| [T02](tasks/T02-domain-entities.md) | VaultDomain: ID, enum, ScopeSet, entity | SPEC-002 | Flash | 1 | T01 | done |
 | [T03](tasks/T03-domain-protocols-testsupport.md) | VaultDomain: protocol repo/infra + KeyloftTestSupport | SPEC-002 | Flash | 2 | T02 | todo |
 | [T04](tasks/T04-persistence-schema.md) | VaultPersistence: VaultDatabase, migration v1, record | SPEC-003 | **5.3** | 3 | T03 | todo |
 | [T05](tasks/T05-core-repos.md) | VaultPersistence: repo OAuthClient, Account, Credential, SecretMetadata | SPEC-003 | Flash | 4 | T04 | todo |
