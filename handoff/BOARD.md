@@ -26,7 +26,7 @@ Tổng 29 task: 11 GLM-5.3, 18 Flash.
 | [T17](tasks/T17-provider-catalog.md) | Providers: Google, Microsoft, Dropbox + ProviderCatalog | SPEC-007 | Flash | 3 | T03 | done |
 | [T18](tasks/T18-oidc-discovery.md) | Providers: OIDC Discovery + merge an toàn | SPEC-007 | Flash | 4 | T17 | done |
 | [T19](tasks/T19-api-probes.md) | Providers: API probe Google/Microsoft/Dropbox | SPEC-007 | Flash | 4 | T17 | done |
-| [T20](tasks/T20-health-checker.md) | HealthCheck: 5 tầng + map trạng thái | SPEC-008 | **5.3** | 6 | T16, T19 | todo |
+| [T20](tasks/T20-health-checker.md) | HealthCheck: 5 tầng + map trạng thái | SPEC-008 | **5.3** | 6 | T16, T19 | done |
 | [T21](tasks/T21-health-scheduler.md) | HealthCheck: HealthScheduler (trigger, 6h, backoff, dedupe) | SPEC-008 | **5.3** | 7 | T20 | todo |
 | [T22](tasks/T22-scope-service.md) | TokenVault: ScopeService (cấp thêm, thu hẹp, thu hồi, xóa account) | SPEC-009 | **5.3** | 6 | T15, T16 | todo |
 | [T23](tasks/T23-vault-runtime.md) | VaultRuntime: composition root + test tích hợp GRDB | SPEC-010 | Flash | 8 | T05, T06, T09, T18, T21, T22 | todo |
