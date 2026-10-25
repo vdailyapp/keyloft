@@ -77,8 +77,12 @@ Map lỗi vào `LayerFailure`:
 public typealias ProbeResolver = @Sendable (ProviderID) -> any APIProbe
 
 public actor HealthChecker {
+    /// Cập nhật T20: HealthCheck không được phụ thuộc SecretVault trong đồ thị SPM
+    /// (Package.swift chỉ cho VaultDomain/TokenVault/Providers) → seam closure thay type.
     public init(accounts: any AccountRepository, credentials: any CredentialRepository,
-                clients: any OAuthClientRepository, secrets: SecretVault, tokens: TokenProvider,
+                clients: any OAuthClientRepository,
+                secretExists: @escaping @Sendable (SecretID) async throws -> Bool,
+                tokens: TokenProvider,
                 providers: any ProviderRegistry, probes: @escaping ProbeResolver,
                 results: any HealthCheckRepository, audit: any AuditLog,
                 clock: any DateProvider, ids: any IDGenerator, policy: HealthPolicy = .init())
