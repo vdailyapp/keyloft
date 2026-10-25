@@ -43,3 +43,4 @@ Khi task đổi public API mà task khác đã/đang dùng, ghi một dòng ở 
 
 - (đã chốt sẵn trong spec) T08: `KeychainSecretStore.init(configuration:contextProvider:)` nhận `KeychainAuthContextProvider` thay vì `VaultLock`.
 - T12: `BrowserSession` throw `BrowserSessionError.userCancelled`; T15 map sang `OAuthError.userCancelled`.
+- T09: `KeychainAuthContextProvider.currentContext()` đổi trả `AuthenticatedContext?` (wrapper Sendable) thay `LAContext?` — LAContext không gửi qua actor được trong Swift 6; ảnh hưởng T08 (đã cập nhật trong cùng PR).

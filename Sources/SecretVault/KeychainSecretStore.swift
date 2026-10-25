@@ -22,9 +22,11 @@ public struct KeychainConfiguration: Sendable {
 }
 
 /// Tách khỏi VaultLock (T09) để KeychainSecretStore không phụ thuộc VaultLock.
+/// Trả `AuthenticatedContext` (wrapper Sendable) thay vì LAContext trần để vượt
+/// ranh giới actor trong strict concurrency.
 public protocol KeychainAuthContextProvider: Sendable {
     /// Context đã xác thực còn hiệu lực, hoặc nil nếu Vault đang khóa.
-    func currentContext() async -> LAContext?
+    func currentContext() async -> AuthenticatedContext?
 }
 
 /// Keychain thật qua SecItem. SecItem là blocking nhưng chờ ngắn (trừ khi chờ Touch ID,
@@ -73,9 +75,9 @@ public actor KeychainSecretStore: SecretStore {
         query[kSecReturnData as String] = true
         query[kSecMatchLimit as String] = kSecMatchLimitOne
 
-        if let context = await contextProvider?.currentContext() {
+        if let wrapper = await contextProvider?.currentContext() {
             // Vault đang mở (đã xác thực gần đây) — dùng lại context, không hỏi lại.
-            query[kSecUseAuthenticationContext as String] = context
+            query[kSecUseAuthenticationContext as String] = wrapper.context
         } else {
             // kSecUseOperationPrompt đã deprecated: dùng context mới + localizedReason.
             let context = LAContext()

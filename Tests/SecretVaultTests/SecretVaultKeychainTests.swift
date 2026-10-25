@@ -44,10 +44,10 @@ struct SecretVaultKeychainTests {
     }()
 
     struct LockedContextProvider: KeychainAuthContextProvider {
-        func currentContext() async -> LAContext? {
+        func currentContext() async -> AuthenticatedContext? {
             let context = LAContext()
             context.interactionNotAllowed = true
-            return context
+            return AuthenticatedContext(context: context)
         }
     }
 
