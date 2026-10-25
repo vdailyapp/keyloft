@@ -79,7 +79,7 @@ public enum TestData {
         tokenURL: URL(string: "https://example.test/dropbox/token")!,
         revokeURL: URL(string: "https://example.test/dropbox/revoke")!,
         discoveryURL: nil,
-        defaultScopes: ["account_info.read", "files.content.read"],
+        defaultScopes: ["account_info.read", "files.metadata.read", "openid", "email"],
         extraAuthParams: ["token_access_type": "offline"],
         quirks: dropboxQuirks
     )

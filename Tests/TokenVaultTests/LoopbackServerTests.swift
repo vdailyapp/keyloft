@@ -166,15 +166,28 @@ struct LoopbackServerTests {
         await stopped.stop()
         await #expect(throws: LoopbackError.cancelled) { try await waiter.value }
 
-        // Port cố định: bind → stop → bind lại được.
+        // Port cố định: bind → stop → bind lại được. NWListener.cancel là async — port có
+        // thể chưa nhả ngay nên thử lại vài lần (kết quả cuối cùng vẫn phải bind được).
         let fixed = URL(string: "http://127.0.0.1:45678/callback")!
         let first = LoopbackServer(configuredRedirect: fixed, timeout: .seconds(10))
         _ = try await first.start()
         await first.stop()
-        let second = LoopbackServer(configuredRedirect: fixed, timeout: .seconds(10))
-        let rebound = try await second.start()
-        #expect(rebound.port == 45678)
-        await second.stop()
+
+        var rebind: LoopbackServer?
+        var url: URL?
+        for _ in 0..<20 {
+            let attempt = LoopbackServer(configuredRedirect: fixed, timeout: .seconds(10))
+            do {
+                url = try await attempt.start()
+                rebind = attempt
+                break
+            } catch {
+                try await Task.sleep(for: .milliseconds(50))
+            }
+        }
+        let bound = try #require(url, "không bind lại được port 45678 sau 20 lần thử")
+        #expect(bound.port == 45678)
+        await rebind?.stop()
     }
 
     @Test("I1: LoopbackServer thật + FakeBrowserSession redirect; listener đóng sau callback")
