@@ -29,7 +29,7 @@ Tổng 29 task: 11 GLM-5.3, 18 Flash.
 | [T20](tasks/T20-health-checker.md) | HealthCheck: 5 tầng + map trạng thái | SPEC-008 | **5.3** | 6 | T16, T19 | done |
 | [T21](tasks/T21-health-scheduler.md) | HealthCheck: HealthScheduler (trigger, 6h, backoff, dedupe) | SPEC-008 | **5.3** | 7 | T20 | done |
 | [T22](tasks/T22-scope-service.md) | TokenVault: ScopeService (cấp thêm, thu hẹp, thu hồi, xóa account) | SPEC-009 | **5.3** | 6 | T15, T16 | done |
-| [T23](tasks/T23-vault-runtime.md) | VaultRuntime: composition root + test tích hợp GRDB | SPEC-010 | Flash | 8 | T05, T06, T09, T18, T21, T22 | todo |
+| [T23](tasks/T23-vault-runtime.md) | VaultRuntime: composition root + test tích hợp GRDB | SPEC-010 | Flash | 8 | T05, T06, T09, T18, T21, T22 | done |
 | [T24](tasks/T24-cli.md) | KeyloftCLI: accounts, health, token | SPEC-010 | Flash | 9 | T23 | todo |
 | [T25](tasks/T25-app-shell.md) | App: XcodeGen, ký, entitlement, WebAuth, AppContainer, lifecycle | SPEC-011 | **5.3** | 9 | T23 | todo |
 | [T26](tasks/T26-ui-menubar-accounts.md) | App: Menu bar + Accounts + notification | SPEC-011 | Flash | 10 | T25 | todo |
