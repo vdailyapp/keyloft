@@ -1,4 +1,5 @@
 import Testing
+
 @testable import TokenVault
 
 @Suite("TokenVault smoke")
