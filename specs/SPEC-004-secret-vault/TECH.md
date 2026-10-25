@@ -178,6 +178,13 @@ See ./TESTING.md. Seam: `UserPresenceAuthenticator` để test `VaultLock` khôn
 test Keychain thật cần `KEYLOFT_KEYCHAIN_TESTS=1` và chạy với
 `useDataProtectionKeychain: false` (login keychain, không cần entitlement).
 
+> **Cập nhật T08 (xác nhận thực nghiệm trên macOS):** login keychain (file-based) **không** cho
+> tạo item có `kSecAttrAccessControl` từ binary chưa ký (`errSecMissingEntitlement -34018`) và
+> không trả về thuộc tính accessible/synchronizable khi đọc attributes. Item `.userPresence`
+> chỉ tạo/đọc được trong Data Protection Keychain (app đã ký + entitlement). Do đó I3/I4 gated
+> thêm điều kiện probe năng lực môi trường; kiểm tra đầy đủ presence nằm ở Manual 1–2
+> (app thật) và T29.
+
 ## Risks and Rollback
 
 - Data Protection Keychain + access group sai team → `missingEntitlement` lúc runtime. Runtime
