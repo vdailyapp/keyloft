@@ -17,7 +17,7 @@ Tổng 29 task: 11 GLM-5.3, 18 Flash.
 | [T08](tasks/T08-keychain-store.md) | SecretVault: KeychainSecretStore (SecItem, access control) | SPEC-004 | **5.3** | 4 | T07 | done |
 | [T09](tasks/T09-vault-lock.md) | SecretVault: VaultLock + LocalAuthenticationAuthenticator | SPEC-004 | **5.3** | 5 | T08 | todo |
 | [T10](tasks/T10-pkce-state.md) | TokenVault: Base64URL, PKCE, state | SPEC-005 | Flash | 3 | T03 | done |
-| [T11](tasks/T11-authorize-url-scopes.md) | TokenVault: AuthorizationRequest + ScopeNormalizer | SPEC-005 | Flash | 4 | T10 | todo |
+| [T11](tasks/T11-authorize-url-scopes.md) | TokenVault: AuthorizationRequest + ScopeNormalizer | SPEC-005 | Flash | 4 | T10 | done |
 | [T12](tasks/T12-loopback-browser.md) | TokenVault: LoopbackServer (NWListener) + BrowserSession + fakes | SPEC-005 | **5.3** | 2 | T02 | done |
 | [T13](tasks/T13-token-endpoint.md) | TokenVault: TokenEndpointClient, OAuthError, form encoding | SPEC-005 | Flash | 3 | T03 | done |
 | [T14](tasks/T14-id-token.md) | TokenVault: IDTokenClaims decode + validate | SPEC-005 | Flash | 4 | T10, T13 | todo |
