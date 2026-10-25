@@ -51,6 +51,13 @@ for dir in Sources/*/; do
     done < <(grep -RnE '^[[:space:]]*import[[:space:]]+VaultPersistence' "$dir" 2>/dev/null || true)
 done
 
+# Rule 5 (SPEC-007): TokenVault/HealthCheck không được hardcode provider cụ thể
+# (phải đi qua ProviderRegistry / APIProbe protocol).
+while IFS=: read -r f ln stmt; do
+    [ -z "$f" ] && continue
+    add "$f:$ln: TokenVault/HealthCheck cấm branch theo provider hoặc hardcode domain provider (dùng ProviderRegistry/APIProbe): $stmt"
+done < <(grep -RnE '(== *\.|case *\.)(google|microsoft|dropbox)\b|(googleapis|microsoftonline|dropboxapi)\.' Sources/TokenVault Sources/HealthCheck 2>/dev/null || true)
+
 if [ -n "$violations" ]; then
     echo "check-imports: phát hiện import vi phạm quy tắc kiến trúc:"
     echo "$violations"
