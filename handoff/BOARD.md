@@ -11,7 +11,7 @@ Tổng 29 task: 11 GLM-5.3, 18 Flash.
 | [T02](tasks/T02-domain-entities.md) | VaultDomain: ID, enum, ScopeSet, entity | SPEC-002 | Flash | 1 | T01 | done |
 | [T03](tasks/T03-domain-protocols-testsupport.md) | VaultDomain: protocol repo/infra + KeyloftTestSupport | SPEC-002 | Flash | 2 | T02 | done |
 | [T04](tasks/T04-persistence-schema.md) | VaultPersistence: VaultDatabase, migration v1, record | SPEC-003 | **5.3** | 3 | T03 | done |
-| [T05](tasks/T05-core-repos.md) | VaultPersistence: repo OAuthClient, Account, Credential, SecretMetadata | SPEC-003 | Flash | 4 | T04 | todo |
+| [T05](tasks/T05-core-repos.md) | VaultPersistence: repo OAuthClient, Account, Credential, SecretMetadata | SPEC-003 | Flash | 4 | T04 | done |
 | [T06](tasks/T06-health-audit-repos.md) | VaultPersistence: repo HealthCheck (retention 50) + AuditLog | SPEC-003 | Flash | 4 | T04 | todo |
 | [T07](tasks/T07-secret-vault-facade.md) | SecretVault: protocol SecretStore, facade, InMemorySecretStore | SPEC-004 | Flash | 3 | T03 | done |
 | [T08](tasks/T08-keychain-store.md) | SecretVault: KeychainSecretStore (SecItem, access control) | SPEC-004 | **5.3** | 4 | T07 | todo |
