@@ -15,7 +15,7 @@ Tổng 29 task: 11 GLM-5.3, 18 Flash.
 | [T06](tasks/T06-health-audit-repos.md) | VaultPersistence: repo HealthCheck (retention 50) + AuditLog | SPEC-003 | Flash | 4 | T04 | done |
 | [T07](tasks/T07-secret-vault-facade.md) | SecretVault: protocol SecretStore, facade, InMemorySecretStore | SPEC-004 | Flash | 3 | T03 | done |
 | [T08](tasks/T08-keychain-store.md) | SecretVault: KeychainSecretStore (SecItem, access control) | SPEC-004 | **5.3** | 4 | T07 | done |
-| [T09](tasks/T09-vault-lock.md) | SecretVault: VaultLock + LocalAuthenticationAuthenticator | SPEC-004 | **5.3** | 5 | T08 | todo |
+| [T09](tasks/T09-vault-lock.md) | SecretVault: VaultLock + LocalAuthenticationAuthenticator | SPEC-004 | **5.3** | 5 | T08 | done |
 | [T10](tasks/T10-pkce-state.md) | TokenVault: Base64URL, PKCE, state | SPEC-005 | Flash | 3 | T03 | done |
 | [T11](tasks/T11-authorize-url-scopes.md) | TokenVault: AuthorizationRequest + ScopeNormalizer | SPEC-005 | Flash | 4 | T10 | done |
 | [T12](tasks/T12-loopback-browser.md) | TokenVault: LoopbackServer (NWListener) + BrowserSession + fakes | SPEC-005 | **5.3** | 2 | T02 | done |
