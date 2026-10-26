@@ -72,11 +72,13 @@ struct MainWindow: View {
             }
             .navigationSplitViewColumnWidth(min: 170, ideal: 190)
         } detail: {
-            // T26 đã thay Accounts; T27/T28 thay nốt các mục còn lại.
+            // T26 đã thay Accounts; T27 đã thay Providers; T28 thay nốt các mục còn lại.
             switch selection ?? .accounts {
             case .accounts:
                 NavigationStack { AccountsView() }
-            case .providers, .secrets, .health, .audit:
+            case .providers:
+                NavigationStack { OAuthClientsView() }
+            case .secrets, .health, .audit:
                 PlaceholderView(title: selection?.rawValue ?? "Accounts")
             }
         }
