@@ -148,6 +148,7 @@ public actor OAuthLoginService {
         do {
             try await browser.present(authorizeURL, callbackScheme: "app.vdaily.keyloft")
         } catch let error as BrowserSessionError {
+            print("TRACE caught-as-BSE -> mapped OAuthError")
             callbackTask.cancel()
             throw Self.mapBrowserError(error)
         }

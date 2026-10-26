@@ -55,6 +55,15 @@ targets:
       - Tests/KeyloftAppTests
     dependencies:
       - target: Keyloft
+      # Link để import nhưng KHÔNG nhúng bản copy thứ hai vào test bundle —
+      #Frameworks đã nằm trong app; nhúng thêm sẽ tạo 2 runtime copy của cùng type
+      # (as?/catch theo type identity bị lệch).
+      - package: Keyloft
+        product: KeyloftTestSupport
+        embed: false
+      - package: Keyloft
+        product: VaultRuntime
+        embed: false
     settings:
       base:
         GENERATE_INFOPLIST_FILE: true

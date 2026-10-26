@@ -9,7 +9,12 @@ struct KeyloftApp: App {
 
     var body: some Scene {
         MenuBarExtra("Keyloft", systemImage: "key.horizontal") {
-            MenuBarContent(container: container, bootstrapError: bootstrapError)
+            if let container {
+                MenuBarView().environment(container)
+            } else {
+                Text(bootstrapError ?? "Lỗi khởi tạo")
+                Button("Thoát") { NSApplication.shared.terminate(nil) }
+            }
         }
         Window("Keyloft", id: "main") {
             Group {
@@ -55,39 +60,9 @@ struct KeyloftApp: App {
     }
 }
 
-struct MenuBarContent: View {
-    let container: AppContainer?
-    let bootstrapError: String?
-    @Environment(\.openWindow) private var openWindow
-
-    var body: some View {
-        if let container {
-            // Nội dung menu bar thật (badge, danh sách account, Check now) lắp ở T26.
-            Text("Keyloft đang chạy")
-            Divider()
-            Button("Mở Keyloft") {
-                openWindow(id: "main")
-                NSApp.activate(ignoringOtherApps: true)
-            }
-            Divider()
-            Button("Thoát") {
-                container.stop()
-                NSApplication.shared.terminate(nil)
-            }
-            .keyboardShortcut("q")
-        } else {
-            Text(bootstrapError ?? "Lỗi khởi tạo")
-            Button("Thoát") {
-                NSApplication.shared.terminate(nil)
-            }
-        }
-    }
-}
-
 struct MainWindow: View {
     let container: AppContainer
     @State private var selection: SidebarItem? = .accounts
-    @State private var showDebugSheet = false
 
     var body: some View {
         NavigationSplitView {
@@ -97,57 +72,17 @@ struct MainWindow: View {
             }
             .navigationSplitViewColumnWidth(min: 170, ideal: 190)
         } detail: {
-            // T25: mọi mục dùng placeholder; T26–T28 thay từng mục.
-            (selection ?? .accounts).view
-        }
-        .overlay(alignment: .bottomTrailing) {
-            #if DEBUG
-            Button("Debug: thêm Google") { showDebugSheet = true }
-                .padding()
-            .sheet(isPresented: $showDebugSheet) {
-                DebugAddAccountSheet(container: container)
+            // T26 đã thay Accounts; T27/T28 thay nốt các mục còn lại.
+            switch selection ?? .accounts {
+            case .accounts:
+                NavigationStack { AccountsView() }
+            case .providers, .secrets, .health, .audit:
+                PlaceholderView(title: selection?.rawValue ?? "Accounts")
             }
-            #endif
         }
         .environment(container)
     }
 }
-
-#if DEBUG
-/// Nút debug T25: thêm account Google bằng client ID nhập tay (luồng login thật).
-struct DebugAddAccountSheet: View {
-    let container: AppContainer
-    @State private var clientId = ""
-    @State private var result: String?
-    @State private var running = false
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Thêm account Google (debug)").font(.headline)
-            TextField("Client ID (.apps.googleusercontent.com)", text: $clientId)
-                .textFieldStyle(.roundedBorder)
-                .frame(minWidth: 380)
-            if let result {
-                Text(result).font(.footnote).foregroundStyle(.secondary)
-            }
-            HStack {
-                Button("Đóng") { dismiss() }
-                Spacer()
-                Button("Đăng nhập") {
-                    running = true
-                    Task {
-                        result = await container.debugAddGoogleAccount(clientId: clientId)
-                        running = false
-                    }
-                }
-                .disabled(running || clientId.isEmpty)
-            }
-        }
-        .padding()
-    }
-}
-#endif
 
 struct SettingsView: View {
     var body: some View {
