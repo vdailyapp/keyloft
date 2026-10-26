@@ -2,5 +2,6 @@
 // Khi file tồn tại, `make app` tự đính vào xcodebuild → app được ký thật với
 // entitlements keychain-access-groups (Data Protection Keychain hoạt động).
 // DEVELOPMENT_TEAM = ABCDE12345
-// CODE_SIGN_ENTITLEMENTS = Keyloft.entitlements
+// CODE_SIGN_IDENTITY = Apple Development
+// KEYLOFT_ENTITLEMENTS = Keyloft.entitlements
 // CODE_SIGN_STYLE = Automatic

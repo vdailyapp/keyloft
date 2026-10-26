@@ -50,7 +50,7 @@ Lắp ráp runtime, tích hợp trên GRDB thật, CLI parse/format/exit code.
 
 ## Manual Verification
 
-1. App đã ký thêm account → `Keyloft.app/Contents/MacOS/keyloft accounts` thấy account.
+1. App đã ký thêm account → `Keyloft.app/Contents/Helpers/keyloft accounts` thấy account.
 2. `rclone lsd gd: --drive-token "{\"access_token\":\"$(keyloft token me@gmail.com)\"}"` hoạt động.
 3. `keyloft health; echo $?` khi tắt mạng → 4.
 

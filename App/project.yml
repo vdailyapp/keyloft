@@ -16,7 +16,6 @@ settings:
     CODE_SIGN_IDENTITY: "-"
     CODE_SIGN_STYLE: Manual
     DEVELOPMENT_TEAM: ""
-    CODE_SIGN_ENTITLEMENTS: ""
     ENABLE_HARDENED_RUNTIME: true
     ENABLE_APP_SANDBOX: false
     SWIFT_VERSION: "6.0"
@@ -34,6 +33,11 @@ targets:
     dependencies:
       - package: Keyloft
         product: VaultRuntime
+    settings:
+      base:
+        # Chỉ target app; -xcconfig dòng lệnh áp cho cả package (GRDB) nên không đặt
+        # CODE_SIGN_ENTITLEMENTS trực tiếp trong Local.xcconfig.
+        CODE_SIGN_ENTITLEMENTS: "$(KEYLOFT_ENTITLEMENTS)"
     # Entitlements đính khi ký thật (Local.xcconfig đặt CODE_SIGN_ENTITLEMENTS +
     # DEVELOPMENT_TEAM); dev ad-hoc không dùng (tránh đòi provisioning profile).
     info:
@@ -67,7 +71,6 @@ targets:
     settings:
       base:
         GENERATE_INFOPLIST_FILE: true
-        PRODUCT_BUNDLE_IDENTIFIER: app.vdaily.keyloft.tests
 
 schemes:
   Keyloft:

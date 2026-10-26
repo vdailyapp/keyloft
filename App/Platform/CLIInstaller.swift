@@ -9,7 +9,8 @@ enum CLIInstaller {
     }
 
     static func embeddedCLIURL(bundle: Bundle = .main) -> URL? {
-        bundle.executableURL?.deletingLastPathComponent().appendingPathComponent("keyloft")
+        // Không đặt cạnh Contents/MacOS/Keyloft: APFS không phân biệt hoa thường → ghi đè app.
+        bundle.bundleURL.appendingPathComponent("Contents/Helpers/keyloft")
     }
 
     static func isInstalled(bundle: Bundle = .main) -> Bool {

@@ -67,6 +67,6 @@ một lệnh in access token mà không phải mở app.
 
 ## Open Questions
 
-- Cách CLI chia sẻ Keychain với app: embed binary trong `Keyloft.app/Contents/MacOS/keyloft`, ký
+- Cách CLI chia sẻ Keychain với app: embed binary trong `Keyloft.app/Contents/Helpers/keyloft`, ký
   cùng team + entitlement `keychain-access-groups`, symlink vào `/usr/local/bin` (xem SPEC-011).
   Dev build: `KEYLOFT_DEV_LOGIN_KEYCHAIN=1` dùng login keychain.

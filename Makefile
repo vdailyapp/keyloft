@@ -21,10 +21,12 @@ embed-cli:
 	swift build -c release --product keyloft
 	@APP=$$(find $(HOME)/Library/Developer/Xcode/DerivedData/Keyloft-*/Build/Products/Debug -maxdepth 1 -name 'Keyloft.app' | head -1); \
 	if [ -n "$$APP" ]; then \
-		cp .build/release/keyloft "$$APP/Contents/MacOS/keyloft"; \
-		codesign --force --identifier app.vdaily.keyloft.cli -s - "$$APP/Contents/MacOS/keyloft"; \
-		codesign --force -s - "$$APP"; \
-		echo "CLI embedded: $$APP/Contents/MacOS/keyloft"; \
+		SIGN_ID=$$([ -f App/Local.xcconfig ] && echo "Apple Development" || echo "-"); \
+		mkdir -p "$$APP/Contents/Helpers"; \
+		cp .build/release/keyloft "$$APP/Contents/Helpers/keyloft"; \
+		codesign --force --options runtime --identifier app.vdaily.keyloft.cli -s "$$SIGN_ID" "$$APP/Contents/Helpers/keyloft"; \
+		codesign --force --preserve-metadata=identifier,entitlements,flags -s "$$SIGN_ID" "$$APP"; \
+		echo "CLI embedded: $$APP/Contents/Helpers/keyloft"; \
 	else \
 		echo "Không tìm thấy Keyloft.app trong DerivedData" >&2; exit 1; \
 	fi
