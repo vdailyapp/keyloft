@@ -17,7 +17,8 @@ trong `BOARD.md`.
 cd ~/Projects/keyloft && git switch main && git pull
 ```
 
-1. Mở phiên zcode thứ nhất ở root repo, chọn **GLM-5.3**, dán prompt **Lead** bên dưới.
+1. Mở phiên zcode thứ nhất ở root repo, chọn **GLM-5.3-Flash** (từ T27 trở đi; trước đó là
+   GLM-5.3), dán prompt **Lead** bên dưới. Không còn task Model = 5.3 → Lead chỉ review/merge.
 2. Mở phiên thứ hai, chọn **GLM-5.3-Flash**, dán prompt **Builder** bên dưới.
 3. Chỉ chạy một phiên mỗi loại. Muốn nhanh hơn có thể mở Builder thứ hai: giao thức claim bên
    dưới chặn hai phiên nhận cùng một task.

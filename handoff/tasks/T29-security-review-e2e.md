@@ -2,9 +2,9 @@
 
 | Model | Spec | Wave | Deps |
 | --- | --- | --- | --- |
-| **GLM-5.3** | SPEC-005..011 | 11 | T24, T26, T27, T28 |
+| **GLM-5.3-Flash** | SPEC-005..011 | 11 | T24, T26, T27, T28 |
 
-Branch: `task/T29-security-review-e2e` · Prompt: `handoff/templates/PROMPT-PRO.md`
+Branch: `task/T29-security-review-e2e` · Prompt: `handoff/templates/PROMPT-FLASH.md`
 
 ## Đọc trước
 

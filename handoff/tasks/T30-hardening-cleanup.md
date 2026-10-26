@@ -2,9 +2,9 @@
 
 | Model | Spec | Wave | Deps |
 | --- | --- | --- | --- |
-| **GLM-5.3** | SPEC-003, 006, 008, 009, 011 | 10 | T26 |
+| **GLM-5.3-Flash** | SPEC-003, 006, 008, 009, 011 | 10 | T26 |
 
-Branch: `task/T30-hardening-cleanup` · Prompt: `handoff/templates/PROMPT-PRO.md`
+Branch: `task/T30-hardening-cleanup` · Prompt: `handoff/templates/PROMPT-FLASH.md`
 
 Task này sinh ra từ review code T01–T26 (2026-10-26). Không thêm tính năng; chỉ sửa chỗ vi phạm
 `AGENTS.md` ("Không `try?` nuốt lỗi", "Không log", "Không `Date()`/`UUID()` trong logic").
@@ -96,6 +96,14 @@ make app-test
 
 ## Lưu ý
 
+- Bảng ở mục 2 là quyết định đã chốt: sửa đúng cột "Sửa", không tự chọn cách khác. Thấy dòng
+  nào mâu thuẫn spec → dừng, ghi "Blocked" trong report, không đoán.
+- Bug quan trọng nhất là ScopeService Dropbox narrow. Viết test hồi quy TRƯỚC, xác nhận test đỏ,
+  rồi mới sửa cho xanh.
+- Làm `scripts/lint-rules.sh` (mục 4) TRƯỚC, chạy để lấy danh sách vi phạm thật, rồi sửa tới khi
+  `make lint` xanh. Comment `// try?:` phải nêu lý do cụ thể, không ghi chung chung "best effort".
+- Trước khi commit: `grep -rn 'print(\|try?' Sources App --include='*.swift'` và đọc từng dòng.
+- `App/Local.xcconfig` có sẵn trên máy → `make app` ký thật bằng Team.
 - Không đổi interface public ngoài phần cần cho bảng ở mục 2. Có đổi thì ghi vào BOARD "Ghi chú thay đổi interface".
 - Không động tới `Makefile` target `app`/`embed-cli`, `App/project.yml`, `App/Local.xcconfig*` (đã sửa ký thật trên main).
 
