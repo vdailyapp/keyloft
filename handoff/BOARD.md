@@ -36,7 +36,7 @@ Tổng 30 task: 10 GLM-5.3, 20 Flash. Từ T27 trở đi mọi task và cả phi
 | [T27](tasks/T27-ui-oauth-clients.md) | App: OAuth Clients (Providers) | SPEC-011 | Flash | 10 | T25 | todo |
 | [T28](tasks/T28-ui-secrets-health-audit.md) | App: Secrets (Touch ID), Health history, Audit | SPEC-011 | Flash | 10 | T25 | todo |
 | [T29](tasks/T29-security-review-e2e.md) | Review bảo mật (RFC 9700/MASVS) + E2E thủ công 3 provider | SPEC-005..011 | Flash | 11 | T24, T26, T27, T28, T30 | todo |
-| [T30](tasks/T30-hardening-cleanup.md) | Dọn nợ review: `try?` nuốt lỗi, print debug, lint chặn | SPEC-003..011 | Flash | 10 | T26 | in-progress:solo |
+| [T30](tasks/T30-hardening-cleanup.md) | Dọn nợ review: `try?` nuốt lỗi, print debug, lint chặn | SPEC-003..011 | Flash | 10 | T26 | done |
 
 ## Ghi chú thay đổi interface
 
@@ -48,3 +48,4 @@ Khi task đổi public API mà task khác đã/đang dùng, ghi một dòng ở 
 - T23: `RuntimeDependencies.secretStore` là factory `(any KeychainAuthContextProvider) -> any SecretStore` (Keychain cần VaultLock do init dựng); thêm `RuntimeDependencies.inMemory(...)` cho test tích hợp.
 - T20: `HealthChecker` nhận `secretExists: @Sendable (SecretID) async throws -> Bool` thay `secrets: SecretVault` (HealthCheck không được phụ thuộc SecretVault trong Package.swift); T23 bơm closure từ SecretVault. Ghi chú thêm: T16 `TokenProvider.init` có tham số `ids: any IDGenerator` (TECH thiếu, audit cần).
 - main (review 2026-10-26): CLI embed chuyển `Contents/MacOS/keyloft` → `Contents/Helpers/keyloft` (APFS không phân biệt hoa thường: bản cũ ghi đè binary `Keyloft` của app). `CLIInstaller`, `Makefile embed-cli`, SPEC-010 đã cập nhật; T29 dùng đường dẫn mới.
+- T30: `HealthScheduler.run(_:)` giờ `async throws` (caller scheduled tự bắt vào `lastRunError`); `LoginOutcome` thêm field `narrowRevocationFailed: Bool = false` (reduce Dropbox báo thu hồi provider thất bại) — ảnh hưởng caller của `scheduler.run` và test so sánh `LoginOutcome`.
