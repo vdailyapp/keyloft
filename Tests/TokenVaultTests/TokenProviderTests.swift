@@ -62,6 +62,32 @@ final class FlakySecretStore: SecretStore, @unchecked Sendable {
     }
 }
 
+/// Repo giả làm `updateStatus` lỗi — lỗi persistence phải throw ra, không nuốt (T30).
+final class StatusFailingAccounts: AccountRepository, @unchecked Sendable {
+    // NSLock + @unchecked Sendable — ngoại lệ cho phép, chỉ trong Tests/.
+    struct UpdateStatusError: Error, Equatable {}
+
+    private let backing: InMemoryAccountRepository
+
+    init(backing: InMemoryAccountRepository) {
+        self.backing = backing
+    }
+
+    func save(_ account: Account) async throws { try await backing.save(account) }
+    func get(_ id: AccountID) async throws -> Account? { try await backing.get(id) }
+    func find(
+        provider: ProviderID, oauthClient: OAuthClientID, externalId: String
+    ) async throws -> Account? {
+        try await backing.find(
+            provider: provider, oauthClient: oauthClient, externalId: externalId)
+    }
+    func list() async throws -> [Account] { try await backing.list() }
+    func updateStatus(_ id: AccountID, to status: AccountStatus, at date: Date) async throws {
+        throw UpdateStatusError()
+    }
+    func delete(_ id: AccountID) async throws { try await backing.delete(id) }
+}
+
 @Suite("TokenProvider")
 struct TokenProviderTests {
     struct Rig {
@@ -82,7 +108,8 @@ struct TokenProviderTests {
         static func make(
             providerId: ProviderID = .microsoft,
             flaky: FlakySecretStore? = nil,
-            granted: ScopeSet = ["openid", "offline_access", "Files.ReadWrite"]
+            granted: ScopeSet = ["openid", "offline_access", "Files.ReadWrite"],
+            failUpdateStatus: Bool = false
         ) async throws -> Rig {
             let db = InMemoryDatabase()
             let audit = InMemoryAuditLog(db: db)
@@ -119,10 +146,12 @@ struct TokenProviderTests {
                 ids: SequentialIDGenerator())
             let stub = StubHTTPClient()
             let registry = InMemoryProviderRegistry(TestData.allProviders)
+            let tokenAccounts: any AccountRepository =
+                failUpdateStatus ? StatusFailingAccounts(backing: accounts) : accounts
             let provider = TokenProvider(
                 providers: registry,
                 clients: clients,
-                accounts: accounts,
+                accounts: tokenAccounts,
                 credentials: credentials,
                 secrets: vault,
                 audit: audit,
@@ -329,6 +358,26 @@ struct TokenProviderTests {
         let account = try await InMemoryAccountRepository(db: rig.db).get(rig.account.id)
         #expect(account?.status == .degraded)
         #expect(try await rig.audit.query(AuditQuery(actions: [.tokenRefreshFailed])).count == 1)
+    }
+
+    @Test("U15: invalid_grant + updateStatus lỗi → throw lỗi persistence, cache vẫn rỗng")
+    func invalidGrantStatusPersistFails() async throws {
+        let rig = try await Rig.make(failUpdateStatus: true)
+        await rig.provider.seed(
+            AccessToken(value: "stale", scopes: [], expiresAt: rig.clock.now().addingTimeInterval(60)),
+            for: rig.account.id)
+        rig.stub.on(
+            "POST", "https://example.test/microsoft/token", status: 400,
+            json: #"{"error":"invalid_grant"}"#)
+
+        await #expect(throws: StatusFailingAccounts.UpdateStatusError.self) {
+            _ = try await rig.provider.accessToken(for: rig.account.id)
+        }
+        // Cache đã xóa TRƯỚC khi updateStatus lỗi — token chết không bao giờ được trả lại.
+        #expect(await rig.provider.cachedToken(for: rig.account.id) == nil)
+        // Repo throw nên status không đổi — lỗi persistence đi ra caller, không nuốt.
+        let account = try await rig.accounts.get(rig.account.id)
+        #expect(account?.status == .healthy)
     }
 
     @Test("U12: scope bị thu hẹp từ ngoài → updateGrantedScopes + audit scope.reduced")

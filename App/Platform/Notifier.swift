@@ -19,17 +19,23 @@ enum NotifierPolicy {
 final class Notifier {
     private let center: UNUserNotificationCenter
     private let defaults: UserDefaults
+    private let clock: any DateProvider
 
-    init(center: UNUserNotificationCenter = .current(), defaults: UserDefaults = .standard) {
+    init(
+        center: UNUserNotificationCenter = .current(),
+        defaults: UserDefaults = .standard,
+        clock: any DateProvider = SystemDateProvider()
+    ) {
         self.center = center
         self.defaults = defaults
+        self.clock = clock
     }
 
     func statusChanged(account: Account, from old: AccountStatus, to new: AccountStatus) async {
         guard old != .needsReauth, new == .needsReauth else { return }
         let key = "notifier.last.\(account.id.description)"
         let last = defaults.object(forKey: key) as? Date
-        guard NotifierPolicy.shouldNotify(lastNotified: last, now: Date()) else { return }
+        guard NotifierPolicy.shouldNotify(lastNotified: last, now: clock.now()) else { return }
 
         let content = UNMutableNotificationContent()
         content.title = "Cần đăng nhập lại"
@@ -38,11 +44,13 @@ final class Notifier {
         content.userInfo = ["accountId": account.id.description]
         let request = UNNotificationRequest(
             identifier: "needsReauth-\(account.id.description)", content: content, trigger: nil)
+        // try?: thông báo là hành động UI best-effort — lỗi center không được làm chết pipeline.
         try? await center.add(request)
-        defaults.set(Date(), forKey: key)
+        defaults.set(clock.now(), forKey: key)
     }
 
     func requestAuthorization() async {
+        // try?: người dùng từ chối quyền thông báo là đường bình thường, không phải lỗi.
         _ = try? await center.requestAuthorization(options: [.alert, .sound])
     }
 }

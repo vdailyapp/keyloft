@@ -48,6 +48,32 @@ struct BoxProbe: APIProbe {
     }
 }
 
+/// Repo giả làm `list()` lỗi — scheduler không được nuốt thành "0 account im lặng" (T30).
+final class ListFailingAccounts: AccountRepository, @unchecked Sendable {
+    // NSLock + @unchecked Sendable — ngoại lệ cho phép, chỉ trong Tests/.
+    struct ListError: Error, Equatable {}
+
+    private let backing: InMemoryAccountRepository
+
+    init(backing: InMemoryAccountRepository) {
+        self.backing = backing
+    }
+
+    func save(_ account: Account) async throws { try await backing.save(account) }
+    func get(_ id: AccountID) async throws -> Account? { try await backing.get(id) }
+    func find(
+        provider: ProviderID, oauthClient: OAuthClientID, externalId: String
+    ) async throws -> Account? {
+        try await backing.find(
+            provider: provider, oauthClient: oauthClient, externalId: externalId)
+    }
+    func list() async throws -> [Account] { throw ListError() }
+    func updateStatus(_ id: AccountID, to status: AccountStatus, at date: Date) async throws {
+        try await backing.updateStatus(id, to: status, at: date)
+    }
+    func delete(_ id: AccountID) async throws { try await backing.delete(id) }
+}
+
 @Suite("HealthScheduler")
 struct HealthSchedulerTests {
     struct Rig {
@@ -71,7 +97,7 @@ struct HealthSchedulerTests {
         let account: Account
         let credential: Credential
 
-        static func make(accountCount: Int = 1) async throws -> Rig {
+        static func make(accountCount: Int = 1, failList: Bool = false) async throws -> Rig {
             let db = InMemoryDatabase()
             let audit = InMemoryAuditLog(db: db)
             let clock = FixedDateProvider()
@@ -137,8 +163,10 @@ struct HealthSchedulerTests {
                 probes: { _ in BoxProbe(box: probeBox) },
                 results: results, audit: audit, clock: clock, ids: ids)
             let sleeper = ManualSleeper()
+            let schedulerAccounts: any AccountRepository =
+                failList ? ListFailingAccounts(backing: accounts) : accounts
             let scheduler = HealthScheduler(
-                checker: checker, accounts: accounts, results: results, clock: clock,
+                checker: checker, accounts: schedulerAccounts, results: results, clock: clock,
                 sleeper: sleeper, interval: 6 * 3600, maxConcurrent: 3)
 
             let credential = try await credentials.active(for: account.id)!
@@ -156,8 +184,8 @@ struct HealthSchedulerTests {
         let rig = try await Rig.make()
         await rig.probeBox.set(delay: .milliseconds(80))
 
-        async let first: [HealthCheckResult] = rig.scheduler.run(.manual(rig.account.id))
-        async let second: [HealthCheckResult] = rig.scheduler.run(.manual(rig.account.id))
+        async let first: [HealthCheckResult] = try rig.scheduler.run(.manual(rig.account.id))
+        async let second: [HealthCheckResult] = try rig.scheduler.run(.manual(rig.account.id))
         let (a, b) = try await (first, second)
         #expect(a.count == 1)
         #expect(b.count == 1)
@@ -171,7 +199,7 @@ struct HealthSchedulerTests {
         let rig = try await Rig.make(accountCount: 10)
         await rig.probeBox.set(delay: .milliseconds(60))
 
-        let results = await rig.scheduler.run(.periodic)
+        let results = try await rig.scheduler.run(.periodic)
         #expect(results.count == 10)
         let maxConcurrent = await rig.probeBox.maxInFlight
         #expect(maxConcurrent == 3)
@@ -182,7 +210,7 @@ struct HealthSchedulerTests {
         let rig = try await Rig.make()
         await rig.probeBox.set(failure: .rateLimited)
 
-        _ = await rig.scheduler.run(.manual(rig.account.id))  // check 1 → sleep 60
+        _ = try await rig.scheduler.run(.manual(rig.account.id))  // check 1 → sleep 60
         let delays = [60.0, 120, 240, 480, 960, 1800, 1800]
         for totalChecks in 2...7 {
             await rig.sleeper.advance(by: 3600)  // đủ để retry tới hạn chạy
@@ -203,7 +231,7 @@ struct HealthSchedulerTests {
         let rig = try await Rig.make()
         await rig.probeBox.set(failure: .network(.timedOut))
 
-        _ = await rig.scheduler.run(.manual(rig.account.id))  // unreachable → sleep 60
+        _ = try await rig.scheduler.run(.manual(rig.account.id))  // unreachable → sleep 60
         await rig.sleeper.advance(by: 60)
         while await rig.probeBox.calls < 2 {
             try await Task.sleep(for: .milliseconds(2))
@@ -222,7 +250,7 @@ struct HealthSchedulerTests {
 
         // Unreachable trở lại → bắt đầu lại từ 60.
         await rig.probeBox.set(failure: .rateLimited)
-        _ = await rig.scheduler.run(.manual(rig.account.id))
+        _ = try await rig.scheduler.run(.manual(rig.account.id))
         requested = await rig.sleeper.requested
         #expect(requested.last == 60)
     }
@@ -266,7 +294,7 @@ struct HealthSchedulerTests {
     @Test("U25: ensureFresh còn mới (healthy 10 phút trước) → không gọi probe")
     func ensureFreshSkips() async throws {
         let rig = try await Rig.make()
-        _ = await rig.scheduler.run(.manual(rig.account.id))  // healthy
+        _ = try await rig.scheduler.run(.manual(rig.account.id))  // healthy
         rig.clock.advance(by: 10 * 60)  // còn新鲜 < 15 phút
         let before = await rig.probeBox.calls
 
@@ -279,7 +307,7 @@ struct HealthSchedulerTests {
     @Test("U26: ensureFresh cũ / needsConsent → check mới")
     func ensureFreshRuns() async throws {
         let rig = try await Rig.make()
-        _ = await rig.scheduler.run(.manual(rig.account.id))
+        _ = try await rig.scheduler.run(.manual(rig.account.id))
         rig.clock.advance(by: 20 * 60)  // cũ hơn freshness
         _ = try await rig.scheduler.ensureFresh(rig.account.id)
         let calls = await rig.probeBox.calls
@@ -302,7 +330,7 @@ struct HealthSchedulerTests {
         let (external, continuation) = AsyncStream<HealthTrigger>.makeStream()
         await rig.scheduler.start(external: external)
 
-        _ = await rig.scheduler.run(.manual(rig.account.id))  // lên lịch retry 60s
+        _ = try await rig.scheduler.run(.manual(rig.account.id))  // lên lịch retry 60s
         await rig.scheduler.stop()
         let callsBefore = await rig.probeBox.calls
         await rig.sleeper.advance(by: 10 * 3600)  // kể cả periodic + retry
@@ -316,7 +344,16 @@ struct HealthSchedulerTests {
     func deletedAccountSkipped() async throws {
         let rig = try await Rig.make()
         try await rig.accounts.delete(rig.account.id)
-        let results = await rig.scheduler.run(.manual(rig.account.id))
+        let results = try await rig.scheduler.run(.manual(rig.account.id))
         #expect(results.isEmpty)
+    }
+
+    @Test("U27: accounts.list() throw → lỗi hiện ra, không nuốt thành 0 account im lặng")
+    func listErrorSurfaces() async throws {
+        let rig = try await Rig.make(failList: true)
+
+        await #expect(throws: ListFailingAccounts.ListError.self) {
+            _ = try await rig.scheduler.run(.manual(nil))
+        }
     }
 }

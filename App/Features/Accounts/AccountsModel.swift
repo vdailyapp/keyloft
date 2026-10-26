@@ -24,8 +24,6 @@ final class AccountsModel {
     private(set) var error: String?
     private(set) var pendingConfirmation: PendingConfirmation?
     private(set) var adding = false
-    /// Debug/test: chuỗi mô tả lỗi gốc (không chứa dữ liệu nhạy cảm).
-    private(set) var rawErrorForTest: String?
 
     private let runtime: VaultRuntime
     private var observer: Task<Void, Never>?
@@ -90,21 +88,8 @@ final class AccountsModel {
                     scopes: providerEntity.defaultScopes,
                     target: .newAccount))
             await load()  // load() xóa error — chỉ gọi khi thành công
-        } catch let oauthError as OAuthError {
-            rawErrorForTest = String(describing: oauthError)
-            switch oauthError {
-            case .userCancelled:
-                self.error = "Đã hủy đăng nhập"
-                print("ADD-MODEL-DEBUG assigned error, now=\(self.error ?? "nil")")
-            default:
-                self.error = "Đăng nhập thất bại: \(oauthError)"
-            }
-        } catch let browserError as BrowserSessionError {
-            rawErrorForTest = String(describing: browserError)
-            self.error = browserError == .userCancelled ? "Đã hủy đăng nhập" : "\(browserError)"
         } catch {
-            rawErrorForTest = String(describing: error)
-            self.error = "\(error)"
+            self.error = oauthErrorMessage(error)
         }
     }
 
@@ -122,24 +107,32 @@ final class AccountsModel {
     }
 
     private func relogin(_ accountId: AccountID) async {
-        guard let account = try? await runtime.accounts.get(accountId),
-            let provider = try? await runtime.providers.provider(account.providerId)
-        else { return }
-        _ = try? await addOrReauth(account: account, scopes: provider.defaultScopes)
+        do {
+            guard let account = try await runtime.accounts.get(accountId) else { return }
+            let provider = try await runtime.providers.provider(account.providerId)
+            _ = try await addOrReauth(account: account, scopes: provider.defaultScopes)
+        } catch {
+            await load()  // load() xóa error — gán lỗi SAU load
+            self.error = oauthErrorMessage(error)
+            return
+        }
         await load()
     }
 
     private func grantMore(_ accountId: AccountID, plan: GrantMorePlan) async {
-        switch plan {
-        case .browser(let request):
-            _ = try? await runtime.scopes.execute(request)
-            await load()
-        case .consoleThenRelogin(_, _, let then):
-            _ = try? await runtime.scopes.execute(then)
-            await load()
-        case .nothingMissing:
-            break
+        do {
+            switch plan {
+            case .browser(let request), .consoleThenRelogin(_, _, let request):
+                _ = try await runtime.scopes.execute(request)
+            case .nothingMissing:
+                break
+            }
+        } catch {
+            await load()  // load() xóa error — gán lỗi SAU load
+            self.error = oauthErrorMessage(error)
+            return
         }
+        await load()
     }
 
     private func addOrReauth(account: Account, scopes: ScopeSet) async throws -> LoginOutcome {
@@ -154,12 +147,14 @@ final class AccountsModel {
     func remove(_ accountId: AccountID, ack: Bool) async {
         pendingConfirmation = nil
         do {
-            if !ack, let account = try await runtime.accounts.get(accountId),
-                let provider = try? await runtime.providers.provider(account.providerId),
-                case .rfc7009(_, true) = provider.quirks.revocation
-            {
-                pendingConfirmation = .grantWideRevocation(accountId)
-                return
+            if !ack, let account = try await runtime.accounts.get(accountId) {
+                // Không được bỏ qua bước xác nhận khi tra cứu provider lỗi — Google revoke
+                // cả grant phải có ack tường minh.
+                let provider = try await runtime.providers.provider(account.providerId)
+                if case .rfc7009(_, true) = provider.quirks.revocation {
+                    pendingConfirmation = .grantWideRevocation(accountId)
+                    return
+                }
             }
             _ = try await runtime.scopes.removeAccount(
                 accountId, acknowledgeGrantWideRevocation: ack)
@@ -171,15 +166,36 @@ final class AccountsModel {
 
     var clientsForAdd: [(ProviderID, [OAuthClient])] {
         get async {
-            let clients = (try? await runtime.clients.list(provider: nil)) ?? []
-            var grouped: [ProviderID: [OAuthClient]] = [:]
-            for client in clients {
-                grouped[client.providerId, default: []].append(client)
-            }
-            return ProviderID.allCases.compactMap { provider in
-                guard let list = grouped[provider], !list.isEmpty else { return nil }
-                return (provider, list)
+            do {
+                let clients = try await runtime.clients.list(provider: nil)
+                var grouped: [ProviderID: [OAuthClient]] = [:]
+                for client in clients {
+                    grouped[client.providerId, default: []].append(client)
+                }
+                return ProviderID.allCases.compactMap { provider in
+                    guard let list = grouped[provider], !list.isEmpty else { return nil }
+                    return (provider, list)
+                }
+            } catch {
+                self.error = "\(error)"
+                return []
             }
         }
+    }
+}
+
+/// Map lỗi sang chuỗi hiển thị cho người dùng — dùng chung cho add/relogin/grantMore
+/// và model chi tiết; lỗi hủy từ luồng OAuth hiện câu thân thiện, còn lại hiện mô tả.
+func oauthErrorMessage(_ error: Error) -> String {
+    // Đối chiếu hủy qua mô tả case: hosted-test nhân bản metadata kiểu giữa bundle app
+    // và bundle test làm `as?` thất bại; mô tả case cho kết quả nhất quán mọi môi trường.
+    if String(describing: error) == "userCancelled" {
+        return "Đã hủy đăng nhập"
+    }
+    return switch error {
+    case let oauth as OAuthError:
+        "Đăng nhập thất bại: \(oauth)"
+    default:
+        "\(error)"
     }
 }

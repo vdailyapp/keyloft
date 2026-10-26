@@ -35,12 +35,19 @@ public struct LoginOutcome: Sendable, Equatable {
     public var credential: Credential
     public var deniedScopes: ScopeSet
     public var isNewAccount: Bool
+    /// Reduce Dropbox: thu hồi credential cũ ở provider THẤT BẠI — credential cũ (superseded)
+    /// và secret của nó vẫn còn để thử lại; UI báo người dùng "chưa thu hồi được".
+    public var narrowRevocationFailed: Bool = false
 
-    public init(account: Account, credential: Credential, deniedScopes: ScopeSet, isNewAccount: Bool) {
+    public init(
+        account: Account, credential: Credential, deniedScopes: ScopeSet, isNewAccount: Bool,
+        narrowRevocationFailed: Bool = false
+    ) {
         self.account = account
         self.credential = credential
         self.deniedScopes = deniedScopes
         self.isNewAccount = isNewAccount
+        self.narrowRevocationFailed = narrowRevocationFailed
     }
 }
 
@@ -148,7 +155,6 @@ public actor OAuthLoginService {
         do {
             try await browser.present(authorizeURL, callbackScheme: "app.vdaily.keyloft")
         } catch let error as BrowserSessionError {
-            print("TRACE caught-as-BSE -> mapped OAuthError")
             callbackTask.cancel()
             throw Self.mapBrowserError(error)
         }
@@ -316,6 +322,7 @@ public actor OAuthLoginService {
         } catch {
             // Bồi hoàn: không để lại secret mồ côi trong Keychain (thứ tự insert fail →
             // xóa secret; lỗi dọn không che lỗi gốc).
+            // try?: bồi hoàn khi login đã lỗi — xóa secret lỗi không được che mất lỗi gốc.
             try? await secrets.delete(secret.id, actor: .user)
             throw error
         }

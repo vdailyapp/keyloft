@@ -15,6 +15,7 @@ enum CLIInstaller {
 
     static func isInstalled(bundle: Bundle = .main) -> Bool {
         guard let embedded = embeddedCLIURL(bundle: bundle) else { return false }
+        // try?: đường dẫn không phải symlink là câu trả lời "chưa cài" bình thường.
         let destination = try? FileManager.default.destinationOfSymbolicLink(
             atPath: installURL.path)
         return destination == embedded.path
@@ -27,6 +28,7 @@ enum CLIInstaller {
         else {
             return .failure(.message("Không tìm thấy CLI trong app bundle"))
         }
+        // try?: symlink cũ không tồn tại là đường bình thường; lỗi xóa lộ ra ở bước tạo symlink.
         try? FileManager.default.removeItem(at: installURL)
         do {
             try FileManager.default.createSymbolicLink(at: installURL, withDestinationURL: cli)

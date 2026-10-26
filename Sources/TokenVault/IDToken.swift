@@ -56,6 +56,7 @@ public struct IDTokenClaims: Sendable, Equatable, Decodable {
         iss = try container.decode(String.self, forKey: .iss)
         sub = try container.decode(String.self, forKey: .sub)
         // aud: string hoặc array.
+        // try?: aud dạng string là nhánh tùy chọn — sai dạng rơi xuống decode array dưới.
         if let single = try? container.decode(String.self, forKey: .aud) {
             aud = [single]
         } else {
@@ -78,9 +79,11 @@ public struct IDTokenClaims: Sendable, Equatable, Decodable {
         guard parts.count == 3 else {
             throw OAuthError.invalidIDToken("JWT phải có đúng 3 phần")
         }
-        guard let headerData = Base64URL.decode(String(parts[0])),
-            let header = try? JSONDecoder().decode(Header.self, from: headerData)
-        else {
+        guard let headerData = Base64URL.decode(String(parts[0])) else {
+            throw OAuthError.invalidIDToken("header không decode được")
+        }
+        // try?: header là JSON tùy chọn — hỏng thì báo invalidIDToken ngay dưới.
+        guard let header = try? JSONDecoder().decode(Header.self, from: headerData) else {
             throw OAuthError.invalidIDToken("header không decode được")
         }
         guard header.alg.caseInsensitiveCompare("none") != .orderedSame else {

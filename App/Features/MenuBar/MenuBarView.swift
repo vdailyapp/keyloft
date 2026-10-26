@@ -8,6 +8,7 @@ import VaultRuntime
 final class MenuBarModel {
     private(set) var rows: [Account] = []
     private(set) var latest: [AccountID: HealthCheckResult] = [:]
+    private(set) var error: String?
 
     private let runtime: VaultRuntime
     private var observer: Task<Void, Never>?
@@ -21,9 +22,14 @@ final class MenuBarModel {
     }
 
     func load() async {
-        rows = (try? await runtime.accounts.list()) ?? []
-        for account in rows {
-            latest[account.id] = try? await runtime.healthResults.latest(for: account.id)
+        error = nil
+        do {
+            rows = try await runtime.accounts.list()
+            for account in rows {
+                latest[account.id] = try await runtime.healthResults.latest(for: account.id)
+            }
+        } catch {
+            self.error = "\(error)"
         }
     }
 
@@ -49,7 +55,13 @@ final class MenuBarModel {
 
     /// "Check now" từ menu bar.
     func checkAll() async {
-        _ = await runtime.scheduler.run(.manual(nil))
+        do {
+            _ = try await runtime.scheduler.run(.manual(nil))
+        } catch {
+            await load()  // load() xóa error — gán lỗi SAU load
+            self.error = "\(error)"
+            return
+        }
         await load()
     }
 
@@ -107,6 +119,11 @@ private struct MenuBarContent: View {
     var body: some View {
         MenuBarBadgeIcon(badge: model.badge)
             .frame(maxWidth: .infinity, alignment: .leading)
+        if let error = model.error {
+            Text(error)
+                .foregroundStyle(.red)
+                .font(.caption)
+        }
         if model.rows.isEmpty {
             Text("Chưa có account")
         } else {

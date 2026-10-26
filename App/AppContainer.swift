@@ -18,6 +18,9 @@ final class AppContainer {
     private var triggerContinuation: AsyncStream<HealthTrigger>.Continuation?
     private var lifecycleTasks: [Task<Void, Never>] = []
     private let notifier = Notifier()
+    /// VaultRuntime không expose `ids` — hàm debug nhập tay dùng generator riêng
+    /// (SystemIDGenerator sinh UUID v4 toàn cục, độc lập instance).
+    private let ids: any IDGenerator = SystemIDGenerator()
 
     init() throws {
         runtime = try VaultRuntime.live(context: .app, browser: WebAuthBrowserSession())
@@ -94,7 +97,7 @@ final class AppContainer {
         }
         do {
             let client = OAuthClient(
-                id: OAuthClientID(rawValue: UUID()),
+                id: OAuthClientID(rawValue: ids.make()),
                 providerId: .google,
                 clientId: clientId.trimmingCharacters(in: .whitespaces),
                 clientSecretRef: nil,
@@ -121,6 +124,7 @@ final class AppContainer {
         latestStatuses[result.accountId] = result.status
         guard previous != nil, previous != result.status else { return }
         Task { [notifier] in
+            // try?: pipeline nền không có kênh UI; account xóa giữa chừng (notFound) là bình thường.
             if let account = try? await runtime.accounts.get(result.accountId), let old = previous {
                 await notifier.statusChanged(account: account, from: old, to: result.status)
             }

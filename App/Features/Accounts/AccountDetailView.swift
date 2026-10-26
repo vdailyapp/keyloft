@@ -10,12 +10,7 @@ struct AccountDetailView: View {
     var body: some View {
         Group {
             if let model {
-                AccountDetailContent(model: model) { account in
-                    Task {
-                        _ = await container.runtime.scheduler.run(.manual(account))
-                        await model.load()
-                    }
-                }
+                AccountDetailContent(model: model)
             } else {
                 ProgressView()
             }
@@ -31,7 +26,6 @@ struct AccountDetailView: View {
 
 private struct AccountDetailContent: View {
     let model: AccountDetailModel
-    let checkNow: (AccountID) -> Void
     @State private var ackWide = false
 
     var body: some View {
@@ -49,7 +43,7 @@ private struct AccountDetailContent: View {
                     .disabled(model.primary == .none)
 
                     Button("Check now") {
-                        checkNow(model.accountId)
+                        Task { await model.checkNow() }
                     }
                 }
 

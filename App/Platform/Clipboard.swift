@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import VaultDomain
 
 /// Copy vào clipboard rồi tự xóa sau 60 s nếu người dùng chưa copy đè (changeCount).
 @MainActor
@@ -9,11 +10,14 @@ final class Clipboard {
     private let pasteboard: NSPasteboard
     private var copiedChangeCount: Int?
     private var clearTask: Task<Void, Never>?
-    private let now: () -> Date
+    private let clock: any DateProvider
 
-    init(pasteboard: NSPasteboard = .general, now: @escaping () -> Date = { Date() }) {
+    init(
+        pasteboard: NSPasteboard = .general,
+        clock: any DateProvider = SystemDateProvider()
+    ) {
         self.pasteboard = pasteboard
-        self.now = now
+        self.clock = clock
     }
 
     func copy(_ text: String) {
@@ -22,6 +26,7 @@ final class Clipboard {
         copiedChangeCount = pasteboard.changeCount
         clearTask?.cancel()
         clearTask = Task { [weak self] in
+            // try?: ngủ bị hủy khi copy đè là đường bình thường của auto-clear.
             try? await Task.sleep(for: .seconds(Self.autoClearInterval))
             guard !Task.isCancelled else { return }
             await MainActor.run { self?.clearIfUnchanged() }
@@ -37,7 +42,7 @@ final class Clipboard {
         }
         pasteboard.clearContents()
         copiedChangeCount = nil
-        _ = date ?? now()
+        _ = date ?? clock.now()
     }
 
     var isTracking: Bool { copiedChangeCount != nil }

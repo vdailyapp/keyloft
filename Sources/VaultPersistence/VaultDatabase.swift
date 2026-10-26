@@ -39,12 +39,26 @@ public final class VaultDatabase: Sendable {
         do {
             try database.migrate()
         } catch {
+            // try?: đóng pool khi migrate lỗi — best-effort dọn tài nguyên, không che lỗi gốc.
             try? pool.close()
             throw error
         }
-        try? FileManager.default.setAttributes(
-            [.posixPermissions: 0o600], ofItemAtPath: url.path)
+        try applyDatabasePermissions(at: url)
         return database
+    }
+
+    /// Quyền 0600 cho DB + `-wal`/`-shm` (nếu đã tồn tại): chmod lỗi nghĩa là DB vẫn mở
+    /// với quyền rộng — phải throw, không được bỏ qua.
+    static func applyDatabasePermissions(at url: URL, fileManager: FileManager = .default) throws {
+        for path in [url.path, url.path + "-wal", url.path + "-shm"]
+        where fileManager.fileExists(atPath: path) {
+            do {
+                try fileManager.setAttributes([.posixPermissions: 0o600], ofItemAtPath: path)
+            } catch {
+                throw PersistenceError.database(
+                    "không đặt quyền 0600 cho \(URL(fileURLWithPath: path).lastPathComponent): \(error)")
+            }
+        }
     }
 
     public static func inMemory() throws -> VaultDatabase {

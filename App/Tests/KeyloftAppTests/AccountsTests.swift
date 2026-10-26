@@ -88,9 +88,8 @@ struct AccountsTests {
         await model.load()
         await model.add(provider: .google, client: client.id)
 
-        // Lỗi cancellation từ luồng OAuth — assert qua rawError để không phụ thuộc
-        // wiring map lỗi giữa các tầng.
-        #expect(model.rawErrorForTest?.contains("userCancelled") == true)
+        // Lỗi hủy map thành câu thân thiện cho người dùng, không chuỗi debug.
+        #expect(model.error == "Đã hủy đăng nhập")
         #expect(model.rows.isEmpty)
         #expect(try await runtime.accounts.list().isEmpty)
     }
@@ -131,6 +130,20 @@ struct AccountsTests {
         #expect(model.pendingConfirmation == .grantWideRevocation(account.id))
         // Account vẫn còn (chưa xóa vì chưa ack).
         #expect(try await runtime.accounts.get(account.id) != nil)
+    }
+
+    @Test("U17: relogin lỗi → model.error hiện cho người dùng, không im lặng")
+    func reloginErrorSurfaces() async throws {
+        let runtime = try await Self.makeRuntime(browserBehavior: .cancel)
+        let client = try await Self.seedClient(runtime)
+        let account = TestData.account(clientId: client.id)
+        try await runtime.accounts.save(account)
+
+        let model = AccountsModel(runtime: runtime)
+        await model.load()
+        await model.perform(.reauth, on: account.id)
+
+        #expect(model.error == "Đã hủy đăng nhập")
     }
 }
 

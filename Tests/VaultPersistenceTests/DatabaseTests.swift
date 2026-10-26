@@ -6,6 +6,15 @@ import VaultDomain
 
 @testable import VaultPersistence
 
+/// FileManager giả luôn lỗi khi setAttributes — test chmod phải throw (T30).
+private final class ThrowingAttributesFM: FileManager {
+    override func setAttributes(
+        _ attributes: [FileAttributeKey: Any], ofItemAtPath path: String
+    ) throws {
+        throw CocoaError(.fileWriteUnknown)
+    }
+}
+
 @Suite("VaultDatabase")
 struct DatabaseTests {
     static func tempDB() -> URL {
@@ -148,6 +157,63 @@ struct DatabaseTests {
             try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM audit_event")
         }
         #expect(count == 200)
+    }
+
+    @Test("U14: thư mục chỉ đọc → open throw (không mở DB với quyền rộng)")
+    func readOnlyDirectory() async throws {
+        let base = FileManager.default.temporaryDirectory
+            .appendingPathComponent("keyloft-ro-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)
+        defer {
+            // Chỉ đọc → khôi phục quyền trước khi xóa rác test.
+            try? FileManager.default.setAttributes(
+                [.posixPermissions: 0o700], ofItemAtPath: base.path)
+            try? FileManager.default.removeItem(at: base)
+        }
+        try FileManager.default.setAttributes([.posixPermissions: 0o500], ofItemAtPath: base.path)
+
+        #expect(throws: (any Error).self) {
+            _ = try VaultDatabase.open(at: base.appendingPathComponent("vault.sqlite"))
+        }
+    }
+
+    @Test("U15: applyDatabasePermissions — DB + wal + shm đều 0600; chmod lỗi → PersistenceError")
+    func databasePermissions() async throws {
+        let url = Self.tempDB()
+        defer {
+            for path in [url.path, url.path + "-wal", url.path + "-shm"] {
+                try? FileManager.default.removeItem(atPath: path)
+            }
+        }
+        // Tạo sẵn DB + WAL + SHM giả (helper chỉ cần file tồn tại).
+        for path in [url.path, url.path + "-wal", url.path + "-shm"] {
+            try Data("x".utf8).write(to: URL(fileURLWithPath: path))
+        }
+
+        try VaultDatabase.applyDatabasePermissions(at: url)
+        for path in [url.path, url.path + "-wal", url.path + "-shm"] {
+            let attrs = try FileManager.default.attributesOfItem(atPath: path)
+            let perms = (attrs[.posixPermissions] as? NSNumber)?.int16Value ?? 0
+            #expect(perms & 0o777 == 0o600, "\(path) phải 0600")
+        }
+
+        // FileManager lỗi khi chmod → PersistenceError.database, không nuốt.
+        do {
+            try VaultDatabase.applyDatabasePermissions(at: url, fileManager: ThrowingAttributesFM())
+            Issue.record("phải throw")
+        } catch {
+            // GRDB xuất typealias deprecated trùng tên PersistenceError nên không cast
+            // kiểu được; so khớp qua sample cùng kiểu dựng theo expression (như U13).
+            let sample = PersistenceError.database("")
+            guard Swift.type(of: error) == Swift.type(of: sample) else {
+                Issue.record("kỳ vọng PersistenceError, được \(error)")
+                return
+            }
+            guard String(describing: error).hasPrefix("database(") else {
+                Issue.record("kỳ vọng case .database, được \(error)")
+                return
+            }
+        }
     }
 
     private func writeBatch(_ db: VaultDatabase, tag: String) async throws {

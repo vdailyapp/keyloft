@@ -30,7 +30,8 @@ struct ScopeServiceTests {
             providerId: ProviderID = .google,
             granted: ScopeSet = ["openid", "https://www.googleapis.com/auth/userinfo.email"],
             secondCredential: Bool = false,
-            healthCount: Int = 0
+            healthCount: Int = 0,
+            failPurge: Bool = false
         ) async throws -> Rig {
             let db = InMemoryDatabase()
             let audit = InMemoryAuditLog(db: db)
@@ -79,8 +80,9 @@ struct ScopeServiceTests {
                         status: .healthy, checks: []))
             }
 
+            let usedStore: any SecretStore = failPurge ? PurgeFailingStore(backing: store) : store
             let vault = SecretVault(
-                store: store, metadata: metadata, audit: audit, clock: clock, ids: ids)
+                store: usedStore, metadata: metadata, audit: audit, clock: clock, ids: ids)
             let stub = StubHTTPClient()
             let tokens = TokenProvider(
                 providers: registry, clients: clients, accounts: accounts,
@@ -305,6 +307,80 @@ struct ScopeServiceTests {
         #expect(try await rig.store.contains(oldRef) == false)
         #expect(try await rig.credentials.get(rig.activeCredential.id)?.status == .superseded)
         #expect(try await rig.metadata.get(rig.activeCredential.refreshTokenRef) != nil)
+    }
+
+    @Test("U15: reduce Dropbox revoke lỗi mạng → credential cũ không revoked, secret còn, audit .failure")
+    func reduceDropboxRevokeFails() async throws {
+        let granted: ScopeSet = ["account_info.read", "openid", "email"]
+        let rig = try await Rig.make(providerId: .dropbox, granted: granted)
+        let provider = TestData.dropboxProvider
+        let revokeURL = try #require(provider.revokeURL)
+        // Refresh OK (revoke Dropbox cần access token), nhưng POST /revoke lỗi mạng.
+        rig.stub.on(
+            "POST", provider.tokenURL.absoluteString,
+            json: #"{"access_token":"fresh-at","token_type":"Bearer","expires_in":3600}"#)
+        rig.stub.onError("POST", revokeURL.absoluteString, URLError(.timedOut))
+
+        let outcome = try await rig.service.reduce(
+            rig.account.id, to: ["account_info.read", "openid"])
+
+        #expect(outcome.narrowRevocationFailed)
+        // Credential cũ giữ nguyên status superseded (không markRevoked) — RT cũ vẫn
+        // sống ở Dropbox, phải thử thu hồi lại được.
+        let old = try await rig.credentials.get(rig.activeCredential.id)
+        #expect(old?.status == .superseded)
+        // Secret cũ không bị purge (còn trong store) để retry.
+        let oldRef = KeychainRef(kind: .refreshToken, id: rig.activeCredential.refreshTokenRef)
+        #expect(try await rig.store.contains(oldRef))
+        #expect(try await rig.metadata.get(rig.activeCredential.refreshTokenRef) != nil)
+        // Audit ghi nhận thu hồi thất bại.
+        let events = try await rig.audit.query(AuditQuery(actions: [.credentialRevoked]))
+        #expect(events.count == 1)
+        guard case .failure = events.first?.result else {
+            Issue.record("kỳ vọng audit .failure, được \(String(describing: events.first?.result))")
+            return
+        }
+        // Login vẫn thành công: credential mới active.
+        #expect(try await rig.credentials.active(for: rig.account.id) != nil)
+    }
+
+    @Test("U16: finalizeRevocation purge lỗi → revoke throw, secret không bị xóa lặng lẽ")
+    func revokePurgeFails() async throws {
+        let rig = try await Rig.make(failPurge: true)
+        rig.happyRefresh()
+
+        await #expect(throws: SecretVaultError.self) {
+            _ = try await rig.service.revoke(
+                rig.activeCredential.id, acknowledgeGrantWideRevocation: true)
+        }
+        let oldRef = KeychainRef(kind: .refreshToken, id: rig.activeCredential.refreshTokenRef)
+        #expect(try await rig.store.contains(oldRef))
+    }
+}
+
+/// Store giả chỉ làm `delete` lỗi — purgeValue phải throw thay vì nuốt (T30).
+final class PurgeFailingStore: SecretStore, @unchecked Sendable {
+    // NSLock + @unchecked Sendable — ngoại lệ cho phép, chỉ trong Tests/.
+    let backing: InMemorySecretStore
+
+    init(backing: InMemorySecretStore) {
+        self.backing = backing
+    }
+
+    func set(_ data: Data, for ref: KeychainRef, policy: SecretAccessPolicy) async throws {
+        try await backing.set(data, for: ref, policy: policy)
+    }
+
+    func get(_ ref: KeychainRef, reason: String) async throws -> Data {
+        try await backing.get(ref, reason: reason)
+    }
+
+    func delete(_ ref: KeychainRef) async throws {
+        throw SecretStoreError.osStatus(-1)
+    }
+
+    func contains(_ ref: KeychainRef) async throws -> Bool {
+        try await backing.contains(ref)
     }
 }
 

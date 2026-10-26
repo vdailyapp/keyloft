@@ -75,6 +75,7 @@ public struct GoogleDriveProbe: APIProbe {
                 struct Item: Decodable { let reason: String? }
             }
         }
+        // try?: body lỗi JSON tùy chọn — hỏng nghĩa là không phải insufficientPermissions.
         guard let body = try? JSONDecoder().decode(Body.self, from: data) else { return false }
         return body.error?.errors?.contains { $0.reason == "insufficientPermissions" } == true
     }

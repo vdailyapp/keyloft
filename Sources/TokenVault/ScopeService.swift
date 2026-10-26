@@ -144,18 +144,29 @@ public actor ScopeService {
         // cần refresh token cũ còn trong store. Login trực tiếp (không qua execute) để
         // giữ giá trị secret cũ tới bước này.
         let oldCredential = try await credentials.active(for: account)
-        let outcome = try await login.login(
+        var outcome = try await login.login(
             LoginRequest(
                 oauthClientId: client.id,
                 scopes: scopes,
                 target: .existing(account),
                 includeGrantedScopes: false,
                 loginHint: accountEntity.email))
+        var keepOldSecrets: Set<SecretID> = []
         if case .dropboxAPI = provider.quirks.revocation, let old = oldCredential {
-            try? await revokeAtProvider(credential: old, provider: provider)
-            try? await finalizeRevocation(credential: old, provider: provider)
+            do {
+                _ = try await revokeAtProvider(credential: old, provider: provider)
+                try await finalizeRevocation(credential: old, provider: provider)
+            } catch {
+                // Thu hồi ở Dropbox thất bại: RT cũ VẪN SỐNG ở provider — giữ credential
+                // (superseded) + secret để thử lại, không dọn trong cleanup dưới đây.
+                try await recordAudit(
+                    .credentialRevoked, target: "credential:\(old.id)", scopes: nil,
+                    result: .failure(reason: "\(error)"))
+                outcome.narrowRevocationFailed = true
+                keepOldSecrets = [old.refreshTokenRef]
+            }
         }
-        try await refreshAndCleanup(account)
+        try await refreshAndCleanup(account, keep: keepOldSecrets)
         if !dropped.isEmpty {
             try await recordAudit(
                 .scopeReduced, target: "account:\(account)", scopes: dropped, result: .success)
@@ -247,11 +258,13 @@ public actor ScopeService {
 
     // MARK: - Nội bộ
 
-    private func refreshAndCleanup(_ account: AccountID) async throws {
+    private func refreshAndCleanup(
+        _ account: AccountID, keep: Set<SecretID> = []
+    ) async throws {
         await tokens.invalidate(account)
         do {
             _ = try await tokens.forceRefresh(for: account)
-            try? await cleanupSuperseded(for: account)
+            try await cleanupSuperseded(for: account, keep: keep)
         } catch {
             // Login đã thành công; refresh lỗi → không dọn secret cũ (giữ để dùng lại),
             // không throw — health check sẽ báo.
@@ -259,11 +272,20 @@ public actor ScopeService {
     }
 
     /// Dọn giá trị Keychain của credential đã supersede; giữ hàng credential + metadata.
-    private func cleanupSuperseded(for account: AccountID) async throws {
+    /// Secret trong `keep` được giữ lại (thu hồi provider chưa xong, phải thử lại được).
+    private func cleanupSuperseded(for account: AccountID, keep: Set<SecretID> = []) async throws {
         for credential in try await credentials.list(for: account)
-        where credential.status == .superseded {
+        where credential.status == .superseded && !keep.contains(credential.refreshTokenRef) {
             if try await secrets.exists(credential.refreshTokenRef) {
-                try? await secrets.purgeValue(credential.refreshTokenRef, actor: .app)
+                do {
+                    try await secrets.purgeValue(credential.refreshTokenRef, actor: .app)
+                } catch {
+                    // Dọn là best-effort sau login thành công; từng secret dọn lỗi phải
+                    // hiện ra trong audit, không nuốt lặng lẽ.
+                    try await recordAudit(
+                        .secretDeleted, target: "secret:\(credential.refreshTokenRef)",
+                        scopes: nil, result: .failure(reason: "\(error)"))
+                }
             }
         }
     }
@@ -297,7 +319,7 @@ public actor ScopeService {
     /// Đánh dấu revoked + dọn secret + invalidate + audit; account hết active → needsReauth.
     private func finalizeRevocation(credential: Credential, provider: Provider) async throws {
         try await credentials.markRevoked(credential.id)
-        try? await secrets.purgeValue(credential.refreshTokenRef, actor: .app)
+        try await secrets.purgeValue(credential.refreshTokenRef, actor: .app)
         await tokens.invalidate(credential.accountId)
         try await recordAudit(
             .credentialRevoked, target: "credential:\(credential.id)", scopes: nil, result: .success)

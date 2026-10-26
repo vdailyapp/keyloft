@@ -155,8 +155,11 @@ public struct TokenEndpointClient: Sendable {
         let (data, response) = try await execute(buildRequest(url: url, form: form, client: client))
         let status = response.statusCode
         guard (200...299).contains(status) else {
+            // Body lỗi là JSON tùy chọn — không decode được vẫn báo lỗi HTTP thô.
             throw Self.mapProviderError(
-                status: status, body: try? JSONDecoder().decode(ErrorBody.self, from: data))
+                status: status,
+                // try?: body lỗi JSON tùy chọn — hỏng vẫn báo lỗi HTTP thô.
+                body: try? JSONDecoder().decode(ErrorBody.self, from: data))
         }
         do {
             return try JSONDecoder().decode(TokenResponse.self, from: data)
@@ -181,8 +184,11 @@ public struct TokenEndpointClient: Sendable {
             // RFC 7009 §5: server không hỗ trợ revocation.
             throw OAuthError.revocationUnsupported
         }
+        // Body lỗi là JSON tùy chọn — không decode được vẫn báo lỗi HTTP thô.
         throw Self.mapProviderError(
-            status: status, body: try? JSONDecoder().decode(ErrorBody.self, from: data))
+            status: status,
+            // try?: body lỗi JSON tùy chọn — hỏng vẫn báo lỗi HTTP thô.
+            body: try? JSONDecoder().decode(ErrorBody.self, from: data))
     }
 
     private static func mapProviderError(status: Int, body: ErrorBody?) -> OAuthError {

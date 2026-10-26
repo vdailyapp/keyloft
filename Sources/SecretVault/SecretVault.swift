@@ -68,8 +68,8 @@ public actor SecretVault {
         do {
             try await metadata.insert(secret)
         } catch {
-            // Bồi hoàn item mồ côi trong Keychain; try? duy nhất — không được che
-            // mất lỗi metadata gốc bằng lỗi khi dọn store.
+            // Bồi hoàn item mồ côi trong Keychain; lỗi dọn không được che mất lỗi gốc.
+            // try?: bồi hoàn khi metadata đã lỗi — xóa store lỗi không thay lỗi gốc được.
             try? await store.delete(ref)
             throw SecretVaultError.metadata("\(error)")
         }

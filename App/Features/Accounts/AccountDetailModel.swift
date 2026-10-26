@@ -29,10 +29,14 @@ final class AccountDetailModel {
 
     func load() async {
         error = nil
-        account = try? await runtime.accounts.get(accountId)
-        credentials = (try? await runtime.credentials.list(for: accountId)) ?? []
-        latestResult = try? await runtime.healthResults.latest(for: accountId)
-        plan = try? await runtime.scopes.planGrantMore(accountId)
+        do {
+            account = try await runtime.accounts.get(accountId)
+            credentials = try await runtime.credentials.list(for: accountId)
+            latestResult = try await runtime.healthResults.latest(for: accountId)
+            plan = try await runtime.scopes.planGrantMore(accountId)
+        } catch {
+            self.error = "\(error)"
+        }
     }
 
     func runPrimary() async {
@@ -42,57 +46,70 @@ final class AccountDetailModel {
         case .grantMore:
             await grantMore()
         case .retry:
-            _ = await runtime.scheduler.run(.manual(accountId))
-            await load()
+            await checkNow()
         case .fixClient, .openDetails, .none:
             break
         }
     }
 
-    private func reauth() async {
-        guard let account,
-            let provider = try? await runtime.providers.provider(account.providerId)
-        else { return }
+    /// "Check now" — lỗi run của scheduler hiện cho người dùng, không nuốt.
+    func checkNow() async {
         do {
+            _ = try await runtime.scheduler.run(.manual(accountId))
+        } catch {
+            await load()  // load() xóa error — gán lỗi SAU load
+            self.error = "\(error)"
+            return
+        }
+        await load()
+    }
+
+    private func reauth() async {
+        guard let account else { return }
+        do {
+            let provider = try await runtime.providers.provider(account.providerId)
             _ = try await runtime.scopes.execute(
                 LoginRequest(
                     oauthClientId: account.oauthClientId,
                     scopes: provider.defaultScopes,
                     target: .existing(accountId)))
             await load()
-        } catch let oauth as OAuthError where oauth == .userCancelled {
-            self.error = "Đã hủy đăng nhập"
         } catch {
-            self.error = "\(error)"
+            await load()  // load() xóa error — gán lỗi SAU load
+            self.error = oauthErrorMessage(error)
         }
     }
 
     private func grantMore() async {
         guard let plan else { return }
-        switch plan {
-        case .browser(let request):
-            _ = try? await runtime.scopes.execute(request)
-        case .consoleThenRelogin(_, _, let then):
-            _ = try? await runtime.scopes.execute(then)
-        case .nothingMissing:
-            break
+        do {
+            switch plan {
+            case .browser(let request), .consoleThenRelogin(_, _, let request):
+                _ = try await runtime.scopes.execute(request)
+            case .nothingMissing:
+                break
+            }
+        } catch {
+            await load()  // load() xóa error — gán lỗi SAU load
+            self.error = oauthErrorMessage(error)
+            return
         }
         await load()
     }
 
     /// Thu hồi credential đang active.
     func revokeActive() async {
-        guard let credential = try? await runtime.credentials.active(for: accountId) else {
-            return
-        }
         do {
+            guard let credential = try await runtime.credentials.active(for: accountId) else {
+                return
+            }
             _ = try await runtime.scopes.revoke(
                 credential.id, acknowledgeGrantWideRevocation: confirmWideRevocation)
             await load()
         } catch ScopeServiceError.grantWideRevocationNotAcknowledged {
             self.error = "Thu hồi Google sẽ đăng xuất MỌI tài khoản của app này — tick xác nhận để tiếp tục."
         } catch {
-            self.error = "\(error)"
+            self.error = oauthErrorMessage(error)
         }
     }
 

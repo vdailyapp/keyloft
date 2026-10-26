@@ -80,8 +80,8 @@ public struct DropboxProbe: APIProbe {
                 }
             }
         }
-        guard
-            let body = try? JSONDecoder().decode(Body.self, from: data),
+        // try?: body lỗi JSON tùy chọn — hỏng nghĩa là không phải missing_scope, trả nil.
+        guard let body = try? JSONDecoder().decode(Body.self, from: data),
             body.error?.tag == "missing_scope"
         else { return nil }
         return body.error?.requiredScope

@@ -141,8 +141,10 @@ public actor TokenProvider {
         } catch let error as OAuthError {
             switch error {
             case .invalidGrant:
-                try? await accounts.updateStatus(account, to: .needsReauth, at: clock.now())
+                // Xóa cache TRƯỚC để caller sau không nhận token chết; lỗi persistence khi
+                // đổi status thì throw đúng lỗi đó — không nuốt, account không bị kẹt active.
                 cache[account] = nil
+                try await accounts.updateStatus(account, to: .needsReauth, at: clock.now())
                 try await appendRefreshFailure(account, "invalid_grant")
                 throw TokenVaultError.oauth(error)
             case .invalidClient:

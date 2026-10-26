@@ -70,6 +70,7 @@ public struct MicrosoftGraphProbe: APIProbe {
             let error: Error?
             struct Error: Decodable { let code: String? }
         }
+        // try?: body lỗi JSON tùy chọn — hỏng nghĩa là không phải accessDenied.
         guard let body = try? JSONDecoder().decode(Body.self, from: data) else { return false }
         return body.error?.code == "accessDenied"
     }
