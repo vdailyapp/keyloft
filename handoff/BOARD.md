@@ -32,7 +32,7 @@ Tổng 29 task: 11 GLM-5.3, 18 Flash.
 | [T23](tasks/T23-vault-runtime.md) | VaultRuntime: composition root + test tích hợp GRDB | SPEC-010 | Flash | 8 | T05, T06, T09, T18, T21, T22 | done |
 | [T24](tasks/T24-cli.md) | KeyloftCLI: accounts, health, token | SPEC-010 | Flash | 9 | T23 | done |
 | [T25](tasks/T25-app-shell.md) | App: XcodeGen, ký, entitlement, WebAuth, AppContainer, lifecycle | SPEC-011 | **5.3** | 9 | T23 | done |
-| [T26](tasks/T26-ui-menubar-accounts.md) | App: Menu bar + Accounts + notification | SPEC-011 | Flash | 10 | T25 | todo |
+| [T26](tasks/T26-ui-menubar-accounts.md) | App: Menu bar + Accounts + notification | SPEC-011 | Flash | 10 | T25 | done |
 | [T27](tasks/T27-ui-oauth-clients.md) | App: OAuth Clients (Providers) | SPEC-011 | Flash | 10 | T25 | todo |
 | [T28](tasks/T28-ui-secrets-health-audit.md) | App: Secrets (Touch ID), Health history, Audit | SPEC-011 | Flash | 10 | T25 | todo |
 | [T29](tasks/T29-security-review-e2e.md) | Review bảo mật (RFC 9700/MASVS) + E2E thủ công 3 provider | SPEC-005..011 | **5.3** | 11 | T24, T26, T27, T28 | todo |
