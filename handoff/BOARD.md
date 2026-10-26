@@ -35,7 +35,7 @@ Tổng 30 task: 10 GLM-5.3, 20 Flash. Từ T27 trở đi mọi task và cả phi
 | [T26](tasks/T26-ui-menubar-accounts.md) | App: Menu bar + Accounts + notification | SPEC-011 | Flash | 10 | T25 | done |
 | [T27](tasks/T27-ui-oauth-clients.md) | App: OAuth Clients (Providers) | SPEC-011 | Flash | 10 | T25 | done |
 | [T28](tasks/T28-ui-secrets-health-audit.md) | App: Secrets (Touch ID), Health history, Audit | SPEC-011 | Flash | 10 | T25 | done |
-| [T29](tasks/T29-security-review-e2e.md) | Review bảo mật (RFC 9700/MASVS) + E2E thủ công 3 provider | SPEC-005..011 | Flash | 11 | T24, T26, T27, T28, T30 | in-progress:solo |
+| [T29](tasks/T29-security-review-e2e.md) | Review bảo mật (RFC 9700/MASVS) + E2E thủ công 3 provider | SPEC-005..011 | Flash | 11 | T24, T26, T27, T28, T30 | needs-human |
 | [T30](tasks/T30-hardening-cleanup.md) | Dọn nợ review: `try?` nuốt lỗi, print debug, lint chặn | SPEC-003..011 | Flash | 10 | T26 | done |
 
 ## Ghi chú thay đổi interface
