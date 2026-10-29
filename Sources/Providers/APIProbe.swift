@@ -74,7 +74,7 @@ enum ProbeSupport {
         }
     }
 
-    static func networkError(_ error: Error) -> ProbeError {
+    static func networkError(_ error: any Error) -> ProbeError {
         if let urlError = error as? URLError {
             return .network(urlError.code)
         }

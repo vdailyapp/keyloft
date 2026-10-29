@@ -13,7 +13,7 @@ public final class FakeLoginRunner: LoginRunner, @unchecked Sendable {
     private let lock = NSLock()
     private var requestsValue: [LoginRequest] = []
     private var simulate: Simulate
-    private var failure: Error?
+    private var failure: (any Error)?
 
     /// Chạy sau khi insert credential mới (trước supersede) và sau khi supersede.
     public var hook: (@Sendable (String) async -> Void)?
@@ -32,14 +32,14 @@ public final class FakeLoginRunner: LoginRunner, @unchecked Sendable {
         return body()
     }
 
-    public func failNext(_ error: Error?) {
+    public func failNext(_ error: (any Error)?) {
         lock.lock()
         defer { lock.unlock() }
         failure = error
     }
 
     public func login(_ request: LoginRequest) async throws -> LoginOutcome {
-        let shouldFail: Error? = withLock {
+        let shouldFail: (any Error)? = withLock {
             requestsValue.append(request)
             let pending = failure
             if failure != nil { failure = nil }

@@ -223,7 +223,7 @@ public actor HealthScheduler {
         retryTasks[account] = Task {
             // try?: ngủ bị hủy khi stop()/kết quả mới là đường bình thường của backoff.
             try? await self.sleeper.sleep(for: .seconds(delay))
-            guard !Task.isCancelled, await !self.isStopped else { return }
+            guard !Task.isCancelled, !self.isStopped else { return }
             do {
                 _ = try await self.run(.retry(account))
             } catch {

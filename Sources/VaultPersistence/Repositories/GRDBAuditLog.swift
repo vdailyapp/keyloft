@@ -15,7 +15,7 @@ public struct GRDBAuditLog: AuditLog {
     public func query(_ query: AuditQuery) async throws -> [AuditEvent] {
         try await db.read { db in
             var conditions: [String] = []
-            var arguments: [DatabaseValueConvertible] = []
+            var arguments: [any DatabaseValueConvertible] = []
             if let target = query.target {
                 conditions.append("target = ?")
                 arguments.append(target)

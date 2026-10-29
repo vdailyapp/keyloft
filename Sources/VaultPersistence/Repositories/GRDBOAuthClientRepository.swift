@@ -7,7 +7,7 @@ import VaultDomain
 extension VaultDatabase {
     func write<T>(_ body: (Database) throws -> T) async throws -> T {
         do {
-            return try await writer.write(body)
+            return try writer.write(body)
         } catch let error as DomainError {
             throw error
         } catch let error as PersistenceError {
@@ -19,7 +19,7 @@ extension VaultDatabase {
 
     func read<T>(_ body: (Database) throws -> T) async throws -> T {
         do {
-            return try await writer.read(body)
+            return try writer.read(body)
         } catch let error as DomainError {
             throw error
         } catch let error as PersistenceError {

@@ -6,11 +6,14 @@ on:
 
 jobs:
   ci:
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
-      - name: Chọn Xcode 16.4
-        run: sudo xcode-select -s /Applications/Xcode_16.4.app
+      - uses: actions/checkout@v5
+      # Không pin đường dẫn Xcode cứng: image runner gỡ bản cũ theo thời gian.
+      - name: Chọn Xcode stable mới nhất
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
       - name: Cache .build
         uses: actions/cache@v4
         with:
